@@ -1,111 +1,50 @@
 import "server-only"
-
 import fs from "fs"
 import path from "path"
 import { DatabaseSync } from "node:sqlite"
 import { nanoid } from "nanoid"
-import type { Project } from "@/lib/project-types"
+import type { DiagramPlan, DiagramPlanItem, DiagramType, DiagramVersion, Project, ProjectChatMessage, ProjectChatSession, ProjectDiagram, ProjectDocument } from "@/lib/project-types"
 
-const dataDir = process.env.PROJECT_DATA_DIR || path.join(process.cwd(), "data")
-const dbPath = process.env.PROJECT_DB_PATH || path.join(dataDir, "projects.sqlite")
+const dataDir=process.env.PROJECT_DATA_DIR||path.join(process.cwd(),"data")
+const dbPath=process.env.PROJECT_DB_PATH||path.join(dataDir,"projects.sqlite")
+let database:DatabaseSync|null=null
+function db(){ if(database)return database; fs.mkdirSync(path.dirname(dbPath),{recursive:true}); database=new DatabaseSync(dbPath); database.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;"); database.exec(`
+CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,code TEXT,description TEXT,summary_text TEXT NOT NULL DEFAULT '',created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,last_opened_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS project_documents(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,name TEXT NOT NULL,mime_type TEXT,original_name TEXT NOT NULL,extracted_text TEXT NOT NULL,created_at INTEGER NOT NULL,FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS chat_sessions(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,title TEXT NOT NULL,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS chat_messages(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,role TEXT NOT NULL,content TEXT NOT NULL,created_at INTEGER NOT NULL,FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS diagram_plans(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,session_id TEXT,title TEXT NOT NULL,status TEXT NOT NULL,request_text TEXT NOT NULL,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS diagram_tasks(id TEXT PRIMARY KEY,plan_id TEXT NOT NULL,diagram_type TEXT NOT NULL,title TEXT NOT NULL,description TEXT,evidence_json TEXT NOT NULL DEFAULT '[]',sort_order INTEGER NOT NULL,status TEXT NOT NULL,error TEXT,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(plan_id) REFERENCES diagram_plans(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS diagrams(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,task_id TEXT,name TEXT NOT NULL,diagram_type TEXT NOT NULL,xml TEXT NOT NULL,thumbnail_svg TEXT,current_version INTEGER NOT NULL DEFAULT 1,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS diagram_versions(id TEXT PRIMARY KEY,diagram_id TEXT NOT NULL,version INTEGER NOT NULL,xml TEXT NOT NULL,source TEXT NOT NULL,created_at INTEGER NOT NULL,FOREIGN KEY(diagram_id) REFERENCES diagrams(id) ON DELETE CASCADE);
+CREATE INDEX IF NOT EXISTS idx_projects_updated ON projects(updated_at DESC); CREATE INDEX IF NOT EXISTS idx_docs_project ON project_documents(project_id); CREATE INDEX IF NOT EXISTS idx_sessions_project ON chat_sessions(project_id,updated_at DESC); CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id,created_at); CREATE INDEX IF NOT EXISTS idx_plans_project ON diagram_plans(project_id,updated_at DESC); CREATE INDEX IF NOT EXISTS idx_diagrams_project ON diagrams(project_id,updated_at DESC);
+`); return database }
+const project=(r:any):Project=>({id:r.id,name:r.name,code:r.code||undefined,description:r.description||undefined,summaryText:r.summary_text||"",createdAt:r.created_at,updatedAt:r.updated_at,lastOpenedAt:r.last_opened_at})
+export function listProjects(q=""){const x=q.trim();const rows=x?db().prepare("SELECT * FROM projects WHERE name LIKE ? OR code LIKE ? OR description LIKE ? OR summary_text LIKE ? ORDER BY last_opened_at DESC").all(...Array(4).fill(`%${x}%`)):db().prepare("SELECT * FROM projects ORDER BY last_opened_at DESC").all();return rows.map(project)}
+export function createProject(i:{name:string;code?:string;description?:string;summaryText?:string}){const n=Date.now(),p={id:nanoid(),name:i.name.trim(),code:i.code?.trim()||undefined,description:i.description?.trim()||undefined,summaryText:i.summaryText?.trim()||"",createdAt:n,updatedAt:n,lastOpenedAt:n};db().prepare("INSERT INTO projects VALUES(?,?,?,?,?,?,?,?)").run(p.id,p.name,p.code??null,p.description??null,p.summaryText,n,n,n);return p}
+export function getProject(id:string,touch=false){if(touch)db().prepare("UPDATE projects SET last_opened_at=? WHERE id=?").run(Date.now(),id);const r=db().prepare("SELECT * FROM projects WHERE id=?").get(id);return r?project(r):null}
+export function updateProject(id:string,i:Partial<Pick<Project,"name"|"code"|"description"|"summaryText">>){const c=getProject(id);if(!c)return null;const n=Date.now();db().prepare("UPDATE projects SET name=?,code=?,description=?,summary_text=?,updated_at=? WHERE id=?").run(i.name?.trim()||c.name,i.code!==undefined?(i.code.trim()||null):(c.code??null),i.description!==undefined?(i.description.trim()||null):(c.description??null),i.summaryText!==undefined?i.summaryText:c.summaryText,n,id);return getProject(id)}
+export function deleteProject(id:string){return db().prepare("DELETE FROM projects WHERE id=?").run(id).changes>0}
 
-let database: DatabaseSync | null = null
+export function addDocument(projectId:string,i:{name:string;mimeType?:string;originalName:string;extractedText:string}):ProjectDocument{const d={id:nanoid(),projectId,name:i.name,mimeType:i.mimeType,originalName:i.originalName,extractedText:i.extractedText,createdAt:Date.now()};db().prepare("INSERT INTO project_documents VALUES(?,?,?,?,?,?,?)").run(d.id,d.projectId,d.name,d.mimeType??null,d.originalName,d.extractedText,d.createdAt);return d}
+export function listDocuments(projectId:string):ProjectDocument[]{return db().prepare("SELECT id,project_id projectId,name,mime_type mimeType,original_name originalName,extracted_text extractedText,created_at createdAt FROM project_documents WHERE project_id=? ORDER BY created_at DESC").all(projectId) as unknown as ProjectDocument[]}
 
-function getDb() {
-    if (database) return database
+export function createChatSession(projectId:string,title="新对话"):ProjectChatSession{const n=Date.now(),s={id:nanoid(),projectId,title,createdAt:n,updatedAt:n};db().prepare("INSERT INTO chat_sessions VALUES(?,?,?,?,?)").run(s.id,projectId,title,n,n);return s}
+export function listChatSessions(projectId:string):ProjectChatSession[]{return db().prepare("SELECT id,project_id projectId,title,created_at createdAt,updated_at updatedAt FROM chat_sessions WHERE project_id=? ORDER BY updated_at DESC").all(projectId) as unknown as ProjectChatSession[]}
+export function addChatMessage(sessionId:string,role:"user"|"assistant"|"system",content:string):ProjectChatMessage{const m={id:nanoid(),sessionId,role,content,createdAt:Date.now()};db().prepare("INSERT INTO chat_messages VALUES(?,?,?,?,?)").run(m.id,sessionId,role,content,m.createdAt);db().prepare("UPDATE chat_sessions SET updated_at=? WHERE id=?").run(m.createdAt,sessionId);return m}
+export function listChatMessages(sessionId:string):ProjectChatMessage[]{return db().prepare("SELECT id,session_id sessionId,role,content,created_at createdAt FROM chat_messages WHERE session_id=? ORDER BY created_at").all(sessionId) as unknown as ProjectChatMessage[]}
 
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true })
-    database = new DatabaseSync(dbPath)
-    database.exec("PRAGMA journal_mode = WAL;")
-    database.exec("PRAGMA foreign_keys = ON;")
-    database.exec(`
-        CREATE TABLE IF NOT EXISTS projects (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            code TEXT,
-            description TEXT,
-            summary_text TEXT NOT NULL DEFAULT '',
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL,
-            last_opened_at INTEGER NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON projects(updated_at DESC);
-        CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name);
-    `)
-    return database
-}
+function task(r:any):DiagramPlanItem{return{id:r.id,type:r.diagram_type,title:r.title,description:r.description||undefined,evidence:JSON.parse(r.evidence_json||"[]"),order:r.sort_order,status:r.status,error:r.error||undefined}}
+export function createPlan(projectId:string,requestText:string,items:Array<{type:DiagramType;title:string;description?:string;evidence?:string[]}>):DiagramPlan{const n=Date.now(),id=nanoid();db().prepare("INSERT INTO diagram_plans(id,project_id,title,status,request_text,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(id,projectId,"制图计划","draft",requestText,n,n);const st=db().prepare("INSERT INTO diagram_tasks VALUES(?,?,?,?,?,?,?,?,?,?,?)");items.forEach((x,k)=>st.run(nanoid(),id,x.type,x.title,x.description??null,JSON.stringify(x.evidence||[]),k,"pending",null,n,n));return getPlan(id)!}
+export function getPlan(id:string):DiagramPlan|null{const p:any=db().prepare("SELECT * FROM diagram_plans WHERE id=?").get(id);if(!p)return null;const items=(db().prepare("SELECT * FROM diagram_tasks WHERE plan_id=? ORDER BY sort_order").all(id) as any[]).map(task);return{id:p.id,projectId:p.project_id,sessionId:p.session_id||undefined,title:p.title,requestText:p.request_text,status:p.status,items,createdAt:p.created_at,updatedAt:p.updated_at}}
+export function listPlans(projectId:string):DiagramPlan[]{const ps=db().prepare("SELECT id FROM diagram_plans WHERE project_id=? ORDER BY updated_at DESC").all(projectId) as any[];return ps.map(x=>getPlan(x.id)!)}
+export function setTaskStatus(id:string,status:string,error?:string){db().prepare("UPDATE diagram_tasks SET status=?,error=?,updated_at=? WHERE id=?").run(status,error??null,Date.now(),id)}
+export function setPlanStatus(id:string,status:string){db().prepare("UPDATE diagram_plans SET status=?,updated_at=? WHERE id=?").run(status,Date.now(),id)}
 
-function mapProject(row: Record<string, unknown>): Project {
-    return {
-        id: String(row.id),
-        name: String(row.name),
-        code: row.code ? String(row.code) : undefined,
-        description: row.description ? String(row.description) : undefined,
-        summaryText: String(row.summary_text || ""),
-        createdAt: Number(row.created_at),
-        updatedAt: Number(row.updated_at),
-        lastOpenedAt: Number(row.last_opened_at),
-    }
-}
-
-export function listProjects(query = ""): Project[] {
-    const db = getDb()
-    const q = query.trim()
-    const rows = q
-        ? db.prepare(`
-            SELECT * FROM projects
-            WHERE name LIKE ? OR code LIKE ? OR description LIKE ? OR summary_text LIKE ?
-            ORDER BY last_opened_at DESC, updated_at DESC
-          `).all(...Array(4).fill(`%${q}%`))
-        : db.prepare("SELECT * FROM projects ORDER BY last_opened_at DESC, updated_at DESC").all()
-    return rows.map((row) => mapProject(row as Record<string, unknown>))
-}
-
-export function createProject(input: { name: string; code?: string; description?: string; summaryText?: string }): Project {
-    const db = getDb()
-    const now = Date.now()
-    const project: Project = {
-        id: nanoid(),
-        name: input.name.trim(),
-        code: input.code?.trim() || undefined,
-        description: input.description?.trim() || undefined,
-        summaryText: input.summaryText?.trim() || "",
-        createdAt: now,
-        updatedAt: now,
-        lastOpenedAt: now,
-    }
-    db.prepare(`
-        INSERT INTO projects (id, name, code, description, summary_text, created_at, updated_at, last_opened_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(project.id, project.name, project.code ?? null, project.description ?? null, project.summaryText, now, now, now)
-    return project
-}
-
-export function getProject(id: string, touch = false): Project | null {
-    const db = getDb()
-    if (touch) {
-        db.prepare("UPDATE projects SET last_opened_at = ? WHERE id = ?").run(Date.now(), id)
-    }
-    const row = db.prepare("SELECT * FROM projects WHERE id = ?").get(id)
-    return row ? mapProject(row as Record<string, unknown>) : null
-}
-
-export function updateProject(id: string, input: Partial<Pick<Project, "name" | "code" | "description" | "summaryText">>): Project | null {
-    const current = getProject(id)
-    if (!current) return null
-    const next = {
-        name: input.name?.trim() || current.name,
-        code: input.code !== undefined ? input.code.trim() || undefined : current.code,
-        description: input.description !== undefined ? input.description.trim() || undefined : current.description,
-        summaryText: input.summaryText !== undefined ? input.summaryText : current.summaryText,
-    }
-    const now = Date.now()
-    getDb().prepare(`
-        UPDATE projects SET name = ?, code = ?, description = ?, summary_text = ?, updated_at = ? WHERE id = ?
-    `).run(next.name, next.code ?? null, next.description ?? null, next.summaryText, now, id)
-    return getProject(id)
-}
-
-export function deleteProject(id: string): boolean {
-    return getDb().prepare("DELETE FROM projects WHERE id = ?").run(id).changes > 0
-}
+const diagram=(r:any):ProjectDiagram=>({id:r.id,projectId:r.project_id,taskId:r.task_id||undefined,name:r.name,type:r.diagram_type,xml:r.xml,thumbnailSvg:r.thumbnail_svg||undefined,currentVersion:r.current_version,createdAt:r.created_at,updatedAt:r.updated_at})
+export function listDiagrams(projectId:string,q=""):ProjectDiagram[]{const rows=q?db().prepare("SELECT * FROM diagrams WHERE project_id=? AND name LIKE ? ORDER BY updated_at DESC").all(projectId,`%${q}%`):db().prepare("SELECT * FROM diagrams WHERE project_id=? ORDER BY updated_at DESC").all(projectId);return rows.map(diagram)}
+export function getDiagram(id:string){const r=db().prepare("SELECT * FROM diagrams WHERE id=?").get(id);return r?diagram(r):null}
+export function createDiagram(i:{projectId:string;taskId?:string;name:string;type:DiagramType;xml:string;thumbnailSvg?:string;source?:"ai"|"manual"}):ProjectDiagram{const n=Date.now(),id=nanoid();db().prepare("INSERT INTO diagrams VALUES(?,?,?,?,?,?,?,?,?,?)").run(id,i.projectId,i.taskId??null,i.name,i.type,i.xml,i.thumbnailSvg??null,1,n,n);db().prepare("INSERT INTO diagram_versions VALUES(?,?,?,?,?,?)").run(nanoid(),id,1,i.xml,i.source||"ai",n);return getDiagram(id)!}
+export function updateDiagram(id:string,i:{name?:string;xml?:string;thumbnailSvg?:string;source?:"ai"|"manual"|"restore"}):ProjectDiagram|null{const c=getDiagram(id);if(!c)return null;const n=Date.now(),v=i.xml!==undefined?c.currentVersion+1:c.currentVersion;db().prepare("UPDATE diagrams SET name=?,xml=?,thumbnail_svg=?,current_version=?,updated_at=? WHERE id=?").run(i.name??c.name,i.xml??c.xml,i.thumbnailSvg??c.thumbnailSvg??null,v,n,id);if(i.xml!==undefined)db().prepare("INSERT INTO diagram_versions VALUES(?,?,?,?,?,?)").run(nanoid(),id,v,i.xml,i.source||"manual",n);return getDiagram(id)}
+export function listVersions(diagramId:string):DiagramVersion[]{return db().prepare("SELECT id,diagram_id diagramId,version,xml,source,created_at createdAt FROM diagram_versions WHERE diagram_id=? ORDER BY version DESC").all(diagramId) as unknown as DiagramVersion[]}
+export function restoreVersion(diagramId:string,version:number){const r:any=db().prepare("SELECT xml FROM diagram_versions WHERE diagram_id=? AND version=?").get(diagramId,version);return r?updateDiagram(diagramId,{xml:r.xml,source:"restore"}):null}
