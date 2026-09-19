@@ -79,4 +79,6 @@ ai-models.json
 
 # admin panel settings (contains secrets)
 data/
-\n# Local project workspace database\n/data/\n
+
+# Local project workspace database
+/data/
