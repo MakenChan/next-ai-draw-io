@@ -53,7 +53,7 @@ id, diagram_id, version, xml, source, created_at
 
 ## 阶段
 
-### Phase 1 — 项目与持久化基础
+### Phase 1 — 项目与持久化基础 ✅
 1. 引入本地 SQLite 数据层。
 2. 建表与初始化。
 3. Projects CRUD API。
@@ -63,7 +63,7 @@ id, diagram_id, version, xml, source, created_at
 
 验收：重启应用后项目和总结仍存在；可创建、搜索、打开、修改项目。
 
-### Phase 2 — 项目内聊天
+### Phase 2 — 项目内聊天 ✅
 1. Session/Message 从浏览器 IndexedDB 扩展为项目级服务端持久化。
 2. 保留现有旧 Session，避免破坏自由聊天。
 3. 项目详情增加聊天列表。
@@ -71,7 +71,7 @@ id, diagram_id, version, xml, source, created_at
 
 验收：同一项目可有多次聊天，重启后可恢复。
 
-### Phase 3 — Skill Engine
+### Phase 3 — Skill Engine ✅
 1. 将 drawio-uml-er-zh skill 纳入项目。
 2. Skill Router 按 diagram_type 只加载需要的规则/模板。
 3. 支持 sequence/flowchart/erd/dfd/class。
@@ -79,7 +79,7 @@ id, diagram_id, version, xml, source, created_at
 
 验收：五种图均可由同一项目总结独立生成。
 
-### Phase 4 — Diagram Planner + 批量生成
+### Phase 4 — Diagram Planner + 批量生成 ✅
 1. 新增 plan_diagrams API/tool。
 2. AI 根据“时序图3、流程图3...”输出结构化任务。
 3. UI 可改名、删除、新增、调整类型。
@@ -88,7 +88,7 @@ id, diagram_id, version, xml, source, created_at
 
 验收：单次 10+ 张图允许部分成功、失败重试，不因一张失败丢失其他结果。
 
-### Phase 5 — Diagram Library
+### Phase 5 — Diagram Library ✅
 1. 图表成为独立实体，不再只依附聊天消息。
 2. 项目图表按类型分组。
 3. 保存 SVG 缩略图。
@@ -97,7 +97,7 @@ id, diagram_id, version, xml, source, created_at
 
 验收：离开聊天后仍可独立打开、编辑、保存每张图。
 
-### Phase 6 — 版本与搜索
+### Phase 6 — 版本与搜索 ✅
 1. 每次 AI/人工保存创建 DiagramVersion。
 2. 支持查看/恢复历史版本。
 3. 全局搜索项目、聊天标题、图表名、项目总结。
@@ -124,3 +124,31 @@ id, diagram_id, version, xml, source, created_at
 Project Workspace 使用 Node.js 内置 `node:sqlite`，建议 Node.js 22.5 或更高版本。数据库默认写入 `data/projects.sqlite`，也可通过 `PROJECT_DB_PATH` 或 `PROJECT_DATA_DIR` 修改位置。
 
 项目模式的 AI 规划、项目问答和批量制图复用现有 `getAIModel` 服务端模型配置。若 AI 规划调用失败，制图计划会自动退回到确定性数量解析，用户仍可手工修改计划后继续。
+
+
+## 当前实现状态
+
+V1 六个阶段的代码骨架已经落地到 feature/project-workspace-v1：
+- 项目/总结/文档/聊天/计划/任务/图表/版本均持久化到本地 SQLite。
+- 项目总结支持粘贴以及 PDF/Markdown/TXT 导入。
+- 项目聊天严格以 summary_text 为事实来源。
+- 制图计划支持 AI 规划、手工调整和两路并发批量生成。
+- drawio-uml-er-zh 按图种动态加载 shared + specific rules。
+- 图表可独立打开到 Draw.io、自动保存、生成版本、恢复历史版本。
+- 项目搜索覆盖项目元数据、总结、图表名和项目聊天。
+- 原自由绘图页面保留，并增加项目工作区入口。
+
+## 本地验收清单
+
+1. 使用 Node.js 22.5+（建议当前 LTS/项目既有 Node 版本）。
+2. npm install 后执行 npm run dev。
+3. 打开 /zh/projects，新建项目。
+4. 粘贴或上传项目总结，刷新页面确认数据仍存在。
+5. 新建项目聊天并提问，确认重启后历史仍存在。
+6. 输入“时序图3 流程图3 ER图1 数据流图3 类图1”，确认生成 11 个计划项。
+7. 修改计划名称/类型后保存，再批量生成。
+8. 打开任一图表，在 Draw.io 手工修改，等待自动保存。
+9. 返回版本历史并恢复旧版本。
+10. 从项目列表搜索总结关键词、聊天关键词和图表名。
+
+> 项目工作区使用 Node runtime + node:sqlite，定位为本地部署能力；Cloudflare 路径仍保留原自由绘图能力，但项目工作区的 SQLite API 不作为 Cloudflare V1 目标。
