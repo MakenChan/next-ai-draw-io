@@ -1390,6 +1390,10 @@ ${data.content}`
                         </div>
                     </button>
                     <div className="flex items-center gap-1 justify-end overflow-visible">
+                        <ButtonWithTooltip tooltipContent="项目工作区" variant="ghost" size="icon" onClick={() => setShowCreateProjectDialog(true)} className="hover:bg-accent" data-testid="project-workspace-button">
+                            <FolderPlus className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-muted-foreground`} />
+                        </ButtonWithTooltip>
+
                         <ButtonWithTooltip
                             tooltipContent={dict.nav.newChat}
                             variant="ghost"
@@ -1496,6 +1500,18 @@ ${data.content}`
                     onFocused={() => setShouldFocusInput(false)}
                 />
             </footer>
+
+            {showCreateProjectDialog && (
+                <div className="absolute inset-0 z-[100] flex items-start justify-end bg-black/20 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreateProjectDialog(false) }}>
+                    <form onSubmit={handleCreateProject} className="mt-12 w-full max-w-sm rounded-xl border bg-background p-5 shadow-2xl">
+                        <h2 className="text-lg font-semibold">创建新项目</h2>
+                        <p className="mb-5 mt-1 text-sm text-muted-foreground">填写项目名称后进入项目工作区。</p>
+                        <label className="mb-4 block"><span className="mb-2 block text-sm font-medium">项目名称 <span className="text-destructive">*</span></span><input autoFocus value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="请输入项目名称" className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" /></label>
+                        <label className="mb-5 block"><span className="mb-2 block text-sm font-medium">项目描述（可选）</span><textarea value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} placeholder="简单描述这个项目..." className="min-h-24 w-full resize-y rounded-md border bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring" /></label>
+                        <div className="flex justify-end gap-2"><button type="button" onClick={() => setShowCreateProjectDialog(false)} className="h-9 rounded-md border px-4 text-sm hover:bg-accent">取消</button><button type="submit" disabled={!projectName.trim() || creatingProject} className="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">{creatingProject ? "创建中..." : "创建项目"}</button></div>
+                    </form>
+                </div>
+            )}
 
             <SettingsDialog
                 open={showSettingsDialog}
