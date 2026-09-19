@@ -1,5 +1,6 @@
 "use client"
-import Link from "next/link"\nimport { usePathname, useRouter } from "next/navigation"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { DrawIoEmbed } from "react-drawio"
 import type { ImperativePanelHandle } from "react-resizable-panels"
@@ -155,7 +156,8 @@ export default function Home() {
     }, [])
 
     return (
-        <div className="h-screen bg-background relative overflow-hidden">\n            <Link href={`/${currentLang}/projects`} className="absolute left-4 top-4 z-50 rounded-md border bg-background/95 px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent">项目工作区</Link>
+        <div className="h-screen bg-background relative overflow-hidden">
+            <Link href={`/${currentLang}/projects`} className="absolute left-4 top-4 z-50 rounded-md border bg-background/95 px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent">项目工作区</Link>
             <ResizablePanelGroup
                 id="main-panel-group"
                 direction={isMobile ? "vertical" : "horizontal"}
