@@ -1,0 +1,4 @@
+import { addChatMessage, listChatMessages } from "@/lib/project-db"
+export const runtime="nodejs"
+export async function GET(_r:Request,{params}:{params:Promise<{sessionId:string}>}){const {sessionId}=await params;return Response.json({messages:listChatMessages(sessionId)})}
+export async function POST(req:Request,{params}:{params:Promise<{sessionId:string}>}){const {sessionId}=await params;const b=await req.json();if(!["user","assistant","system"].includes(b.role)||typeof b.content!=="string")return Response.json({error:"Invalid message"},{status:400});return Response.json({message:addChatMessage(sessionId,b.role,b.content)},{status:201})}
