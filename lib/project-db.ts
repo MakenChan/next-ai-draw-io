@@ -50,3 +50,5 @@ export function listVersions(diagramId:string):DiagramVersion[]{return db().prep
 export function restoreVersion(diagramId:string,version:number){const r:any=db().prepare("SELECT xml FROM diagram_versions WHERE diagram_id=? AND version=?").get(diagramId,version);return r?updateDiagram(diagramId,{xml:r.xml,source:"restore"}):null}
 
 export function getTask(id:string):DiagramPlanItem|null{const r:any=db().prepare("SELECT * FROM diagram_tasks WHERE id=?").get(id);return r?task(r):null}
+
+export function replacePlanItems(planId:string,items:Array<{id?:string;type:DiagramType;title:string;description?:string;evidence?:string[]}>){const d=db(),n=Date.now();d.prepare("DELETE FROM diagram_tasks WHERE plan_id=?").run(planId);const st=d.prepare("INSERT INTO diagram_tasks VALUES(?,?,?,?,?,?,?,?,?,?,?)");items.forEach((x,k)=>st.run(x.id||nanoid(),planId,x.type,x.title,x.description??null,JSON.stringify(x.evidence||[]),k,"pending",null,n,n));d.prepare("UPDATE diagram_plans SET updated_at=? WHERE id=?").run(n,planId);return getPlan(planId)}
