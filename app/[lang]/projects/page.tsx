@@ -1,8 +1,37 @@
 "use client"
 
-import { FolderOpen, Plus, Search } from "lucide-react"
+import { FolderOpen, Search } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { FormEvent, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import type { Project } from "@/lib/project-types"
+
+export default function ProjectsPage() {
+    const router = useRouter()
+    const params = useParams<{ lang: string }>()
+    const [projects, setProjects] = useState<Project[]>([])
+    const [query, setQuery] = useState("")
+    const [name, setName] = useState("")
+    const [loading, setLoading] = useState(true)
+
+    async function load(q = "") {
+        setLoading(true)
+        const res = await fetch(`/api/projects?q=${encodeURIComponent(q)}`)
+        const data = await res.json()
+        setProjects(data.projects || [])
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        const timer = setTimeout(() => load(query), 200)
+        return () => clearTimeout(timer)
+    }, [query])
+
+"use client"
+
+import { FolderOpen, Search } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import type { Project } from "@/lib/project-types"
 
@@ -49,11 +78,6 @@ export default function ProjectsPage() {
                     </div>
                     <Button variant="outline" onClick={() => router.push(`/${params.lang}`)}>返回自由绘图</Button>
                 </header>
-
-                <form onSubmit={create} className="flex gap-2 rounded-xl border bg-card p-4">
-                    <input value={name} onChange={(e) => setName(e.target.value)} placeholder="新项目名称，例如：资产管理系统" className="h-10 flex-1 rounded-md border bg-background px-3" />
-                    <Button type="submit"><Plus />新建项目</Button>
-                </form>
 
                 <div className="relative">
                     <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
