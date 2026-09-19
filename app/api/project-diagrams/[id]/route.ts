@@ -1,4 +1,0 @@
-import { getDiagram, updateDiagram } from "@/lib/project-db"
-export const runtime="nodejs"
-export async function GET(_r:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;const diagram=getDiagram(id);return diagram?Response.json({diagram}):Response.json({error:"Not found"},{status:404})}
-export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;const b=await req.json();const diagram=updateDiagram(id,{name:b.name,xml:b.xml,thumbnailSvg:b.thumbnailSvg,source:b.source||"manual"});return diagram?Response.json({diagram}):Response.json({error:"Not found"},{status:404})}
