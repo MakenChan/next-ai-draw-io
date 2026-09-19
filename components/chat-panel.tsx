@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import {
-    FolderPlus,\n    MessageSquarePlus,
+    FolderPlus,
+    MessageSquarePlus,
     PanelRightClose,
     PanelRightOpen,
     Settings,
@@ -162,7 +163,11 @@ export default function ChatPanel({
     const { files, pdfData, handleFileChange, setFiles } = useFileProcessor()
     const [urlData, setUrlData] = useState<Map<string, UrlData>>(new Map())
 
-    const [showSettingsDialog, setShowSettingsDialog] = useState(false)\n    const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)\n    const [projectName, setProjectName] = useState("")\n    const [projectDescription, setProjectDescription] = useState("")\n    const [creatingProject, setCreatingProject] = useState(false)
+    const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+    const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)
+    const [projectName, setProjectName] = useState("")
+    const [projectDescription, setProjectDescription] = useState("")
+    const [creatingProject, setCreatingProject] = useState(false)
     const [showModelConfigDialog, setShowModelConfigDialog] = useState(false)
 
     // Model configuration hook
@@ -1142,12 +1147,18 @@ export default function ChatPanel({
             if (isPdfFile(file)) {
                 const extracted = pdfData.get(file)
                 if (extracted?.text) {
-                    userText += `\n\n[PDF: ${file.name}]\n${extracted.text}`
+                    userText += `
+
+[PDF: ${file.name}]
+${extracted.text}`
                 }
             } else if (isTextFile(file)) {
                 const extracted = pdfData.get(file)
                 if (extracted?.text) {
-                    userText += `\n\n[File: ${file.name}]\n${extracted.text}`
+                    userText += `
+
+[File: ${file.name}]
+${extracted.text}`
                 }
             } else if (imageParts) {
                 // Handle as image (only if imageParts array provided)
@@ -1168,7 +1179,12 @@ export default function ChatPanel({
         if (urlDataParam) {
             for (const [url, data] of urlDataParam) {
                 if (data.content) {
-                    userText += `\n\n[URL: ${url}]\nTitle: ${data.title}\n\n${data.content}`
+                    userText += `
+
+[URL: ${url}]
+Title: ${data.title}
+
+${data.content}`
                 }
             }
         }
