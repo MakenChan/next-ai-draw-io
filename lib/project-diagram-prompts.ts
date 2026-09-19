@@ -1,32 +1,25 @@
 import type { DiagramType } from "@/lib/project-types"
 
-const rules: Record<DiagramType,string> = {
- sequence: "Create a UML sequence diagram. Use clear participants, top-to-bottom messages, dashed return messages where useful, and alt/opt fragments only when supported by the source summary.",
- flowchart: "Create a business flowchart. Use one start and explicit end states, diamonds for decisions, label branches, and keep the primary path visually obvious.",
- erd: "Create a Crow's Foot ERD. Show entities/tables, important fields, PK/FK markers, and only relationships supported by the source summary. Do not invent columns.",
- dfd: "Create a data-flow diagram. Distinguish external entities, processes, data stores, and labeled data flows. Do not turn control flow into data flow.",
- class: "Create a UML class diagram. Show important classes, selected fields/methods, and supported association/inheritance/dependency relationships. Do not invent implementation details.",
-}
+export function diagramPrompt(type: DiagramType, title: string, description: string, summary: string, skillRules: string) {
+ return `你负责根据项目总结生成可编辑的 draw.io mxGraph XML。
 
-export function diagramPrompt(type: DiagramType, title: string, description: string, summary: string) {
- return `You generate draw.io mxGraph XML from a project summary.
-
-SOURCE OF TRUTH:
+项目总结（唯一事实来源）：
 ${summary}
 
-TASK:
-Title: ${title}
-Type: ${type}
-Description: ${description || "(none)"}
+制图任务：
+标题：${title}
+类型：${type}
+说明：${description || "无"}
 
-RULES:
-${rules[type]}
-- Use only facts supported by SOURCE OF TRUTH. If details are missing, keep the diagram higher-level.
-- Output ONLY sibling <mxCell> elements. No markdown, no explanation, no <mxfile>, <mxGraphModel>, <root>, or root cells id 0/1.
-- Every mxCell must have a unique id and valid parent. Top-level parent is "1".
-- Every vertex must include mxGeometry. Every edge must include mxGeometry relative="1".
-- Prefer orthogonal connectors and readable spacing.
-- Escape XML attribute values correctly.
+当前图种 Skill 规则：
+${skillRules}
+
+额外输出约束：
+- 只能使用项目总结能支持的事实；信息不足时降低细节层级，不得编造。
+- 只输出同级 <mxCell> 元素，不输出 Markdown、解释、<mxfile>、<mxGraphModel>、<root> 或 id=0/1 的根 cell。
+- 每个 mxCell id 唯一，顶层 parent="1"。
+- 每个 vertex 必须包含 mxGeometry；每个 edge 必须包含 mxGeometry relative="1" as="geometry"。
+- XML 属性正确转义。
 `
 }
 
