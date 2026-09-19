@@ -1,7 +1,7 @@
 import { generateText } from "ai"
 import { getAIModel } from "@/lib/ai-providers"
 import { createDiagram, getProject, getTask, setTaskStatus } from "@/lib/project-db"
-import { diagramPrompt, wrapProjectMxCells } from "@/lib/project-diagram-prompts"
+import { diagramPrompt, wrapProjectMxCells } from "@/lib/project-diagram-prompts"\nimport { loadDiagramSkill } from "@/lib/project-skill-loader"
 
 export const runtime="nodejs"
 export const maxDuration=300
@@ -24,7 +24,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
    awsRegion:req.headers.get("x-aws-region"),awsSessionToken:req.headers.get("x-aws-session-token"),
    vertexApiKey:req.headers.get("x-vertex-api-key"),
   })
-  const result=await generateText({model,prompt:diagramPrompt(task.type,task.title,task.description||"",project.summaryText),maxOutputTokens:16000,...(providerOptions&&{providerOptions}),...(headers&&{headers})})
+  const skillRules=await loadDiagramSkill(task.type)\n  const result=await generateText({model,prompt:diagramPrompt(task.type,task.title,task.description||"",project.summaryText,skillRules),maxOutputTokens:16000,...(providerOptions&&{providerOptions}),...(headers&&{headers})})
   const cells=clean(result.text)
   if(!cells.includes("<mxCell"))throw new Error("模型没有返回有效的 mxCell XML")
   const diagram=createDiagram({projectId:id,taskId:task.id,name:task.title,type:task.type,xml:wrapProjectMxCells(cells),source:"ai"})
