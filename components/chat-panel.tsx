@@ -170,6 +170,33 @@ export default function ChatPanel({
     const [creatingProject, setCreatingProject] = useState(false)
     const [showModelConfigDialog, setShowModelConfigDialog] = useState(false)
 
+    const handleCreateProject = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (!projectName.trim() || creatingProject) return
+        setCreatingProject(true)
+        try {
+            const res = await fetch(getApiEndpoint("/api/projects"), {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                    name: projectName.trim(),
+                    description: projectDescription.trim() || undefined,
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok || !data.project) throw new Error(data.error || "创建项目失败")
+            setShowCreateProjectDialog(false)
+            setProjectName("")
+            setProjectDescription("")
+            const lang = pathname.split("/")[1] || "zh"
+            router.push(`/${lang}/projects/${data.project.id}`)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "创建项目失败")
+        } finally {
+            setCreatingProject(false)
+        }
+    }
+
     // Model configuration hook
     const modelConfig = useModelConfig()
 
