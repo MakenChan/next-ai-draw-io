@@ -1,0 +1,4 @@
+import { addDocument, getProject, listDocuments, updateProject } from "@/lib/project-db"
+export const runtime="nodejs"
+export async function GET(_r:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;return Response.json({documents:listDocuments(id)})}
+export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;if(!getProject(id))return Response.json({error:"Project not found"},{status:404});const b=await req.json();if(typeof b.extractedText!=="string"||typeof b.originalName!=="string")return Response.json({error:"Invalid document"},{status:400});const document=addDocument(id,{name:b.name||b.originalName,mimeType:b.mimeType,originalName:b.originalName,extractedText:b.extractedText});if(b.useAsSummary!==false)updateProject(id,{summaryText:b.extractedText});return Response.json({document},{status:201})}
