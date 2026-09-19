@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import {
-    MessageSquarePlus,
+    FolderPlus,\n    MessageSquarePlus,
     PanelRightClose,
     PanelRightOpen,
     Settings,
@@ -162,7 +162,7 @@ export default function ChatPanel({
     const { files, pdfData, handleFileChange, setFiles } = useFileProcessor()
     const [urlData, setUrlData] = useState<Map<string, UrlData>>(new Map())
 
-    const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+    const [showSettingsDialog, setShowSettingsDialog] = useState(false)\n    const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)\n    const [projectName, setProjectName] = useState("")\n    const [projectDescription, setProjectDescription] = useState("")\n    const [creatingProject, setCreatingProject] = useState(false)
     const [showModelConfigDialog, setShowModelConfigDialog] = useState(false)
 
     // Model configuration hook
