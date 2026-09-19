@@ -110,3 +110,17 @@ id, diagram_id, version, xml, source, created_at
 - Diagram 是一等实体。
 - V1 的事实来源只有用户提供的项目总结/总结文件。
 - 生成内容超出总结事实时应标记“信息不足”，而不是编造。
+
+
+## 当前实现状态
+- [x] Phase 1：SQLite 项目持久化、项目列表/搜索、项目总结、MD/TXT/PDF 导入、总结 Prompt
+- [x] Phase 2：项目级聊天 Session/Message 持久化与基于项目总结的问答
+- [x] Phase 3：五类图的专用生成规则路由（sequence/flowchart/erd/dfd/class）
+- [x] Phase 4：AI 制图规划（失败自动降级）、计划编辑、双 worker 批量生成、单任务失败隔离
+- [x] Phase 5：独立 Diagram 实体、图表库、Draw.io 加载、编辑自动保存
+- [x] Phase 6：DiagramVersion、版本恢复、跨项目名称/总结/聊天/图表搜索
+
+## 本地运行要求
+Project Workspace 使用 Node.js 内置 `node:sqlite`，建议 Node.js 22.5 或更高版本。数据库默认写入 `data/projects.sqlite`，也可通过 `PROJECT_DB_PATH` 或 `PROJECT_DATA_DIR` 修改位置。
+
+项目模式的 AI 规划、项目问答和批量制图复用现有 `getAIModel` 服务端模型配置。若 AI 规划调用失败，制图计划会自动退回到确定性数量解析，用户仍可手工修改计划后继续。
