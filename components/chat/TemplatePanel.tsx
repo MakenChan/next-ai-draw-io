@@ -26,10 +26,12 @@ import { useDictionary } from "@/hooks/use-dictionary"
 import {
     deleteTemplate,
     duplicateTemplate,
+    ensureSkillPromptTemplates,
     exportTemplates,
     getAllTemplates,
     importTemplates,
     incrementClickCount,
+    isSkillPromptTemplate,
     incrementRunCount,
     searchTemplates,
     type Template,
@@ -98,6 +100,7 @@ export function TemplatePanel({
     } | null>(null)
 
     const loadTemplates = useCallback(async () => {
+        await ensureSkillPromptTemplates()
         const result = await getAllTemplates()
         setTemplates(result)
         setLoading(false)
@@ -466,6 +469,9 @@ export function TemplatePanel({
                                             {template.pinned && (
                                                 <Bookmark className="w-3 h-3 text-primary fill-primary shrink-0" />
                                             )}
+                                            {isSkillPromptTemplate(template.id) && (
+                                                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Skill</span>
+                                            )}
                                         </div>
                                         {template.description && (
                                             <div className="text-xs text-muted-foreground truncate">
@@ -529,17 +535,19 @@ export function TemplatePanel({
                                             >
                                                 <Copy className="w-4 h-4" />
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    handleDeleteClick(template)
-                                                }}
-                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                                                title={dict.common.delete}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {!isSkillPromptTemplate(template.id) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleDeleteClick(template)
+                                                    }}
+                                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                                    title={dict.common.delete}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
