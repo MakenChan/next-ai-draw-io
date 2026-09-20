@@ -1109,7 +1109,23 @@ export default function ChatPanel({
         continuationRetryCountRef.current = 0
         partialXmlRef.current = ""
 
-        const config = getSelectedAIConfig()
+        const storedConfig = getSelectedAIConfig()
+        const selectedModel = modelConfig.selectedModel
+        const config = selectedModel
+            ? {
+                  ...storedConfig,
+                  aiProvider: selectedModel.provider,
+                  aiBaseUrl: selectedModel.baseUrl || "",
+                  aiApiKey: selectedModel.apiKey || "",
+                  aiModel: selectedModel.modelId,
+                  awsAccessKeyId: selectedModel.awsAccessKeyId || "",
+                  awsSecretAccessKey: selectedModel.awsSecretAccessKey || "",
+                  awsRegion: selectedModel.awsRegion || "",
+                  awsSessionToken: selectedModel.awsSessionToken || "",
+                  vertexApiKey: selectedModel.vertexApiKey || "",
+                  selectedModelId: selectedModel.id,
+              }
+            : storedConfig
 
         sendMessage(
             { parts },
