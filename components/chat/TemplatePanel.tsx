@@ -32,7 +32,6 @@ import {
     importTemplates,
     incrementClickCount,
     isSkillPromptTemplate,
-    incrementRunCount,
     searchTemplates,
     type Template,
     updateTemplate,
@@ -77,7 +76,6 @@ function formatLastUsed(timestamp: number, neverUsedText: string): string {
 
 export function TemplatePanel({
     setInput,
-    onSendTemplate,
     currentInput = "",
 }: TemplatePanelProps) {
     const dict = useDictionary()
@@ -162,45 +160,39 @@ export function TemplatePanel({
         }
     }
 
-    // Handle template card click - send directly or show confirmation
+    // Template clicks only prepare a draft. The user must add business context
+    // and explicitly press the chat Send button before any AI request is made.
+    const buildTemplateDraft = (template: Template): string => {
+        return `${template.prompt.trim()}
+
+业务描述：
+请在这里补充具体业务场景、对象生命周期、状态、触发事件、异常/重试规则等信息。
+`
+    }
+
+    const applyTemplateToInput = async (template: Template) => {
+        await incrementClickCount(template.id)
+        setInput(buildTemplateDraft(template))
+        loadTemplates()
+        setConfirmSendDialogOpen(false)
+        setTemplateToSend(null)
+    }
+
     const handleTemplateClick = async (template: Template) => {
-        // If there's unsent content in the input, show confirmation dialog
         if (currentInput.trim()) {
             setTemplateToSend(template)
             setConfirmSendDialogOpen(true)
             return
         }
 
-        // No unsent content, send directly
-        await sendTemplate(template)
+        await applyTemplateToInput(template)
     }
 
-    // Actually send the template
-    const sendTemplate = async (template: Template) => {
-        // Increment click count only when actually sending
-        await incrementClickCount(template.id)
-        if (onSendTemplate) {
-            // Increment run count and update lastUsedAt
-            await incrementRunCount(template.id)
-            // Reload to show updated stats
-            loadTemplates()
-            // Call the send callback
-            onSendTemplate(template)
-        } else {
-            // Fallback: just fill the input if no send callback provided
-            setInput(template.prompt)
-        }
-        setConfirmSendDialogOpen(false)
-        setTemplateToSend(null)
-    }
-
-    // Handle confirmation dialog - user confirmed to send template
     const handleConfirmSend = async () => {
         if (!templateToSend) return
-        await sendTemplate(templateToSend)
+        await applyTemplateToInput(templateToSend)
     }
 
-    // Handle cancel - close dialog without sending
     const handleCancelSend = () => {
         setConfirmSendDialogOpen(false)
         setTemplateToSend(null)
@@ -606,12 +598,10 @@ export function TemplatePanel({
                 <AlertDialogContent className="max-w-sm">
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {dict.templates.confirmSendTitle ||
-                                "Replace current input?"}
+                            "替换当前输入内容？"
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            {dict.templates.confirmSendDescription ||
-                                "You have unsent content in the input. Sending this template will replace it."}
+                            "当前输入框已有内容。应用模板后只会把模板提示词放入输入框，不会自动发送；你可以继续补充业务描述后再手动点击发送。"
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -619,8 +609,7 @@ export function TemplatePanel({
                             {dict.common.cancel}
                         </AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmSend}>
-                            {dict.templates.confirmSendButton ||
-                                "Send Template"}
+                            "使用模板"
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
