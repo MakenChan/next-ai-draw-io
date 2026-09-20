@@ -159,7 +159,7 @@ export default function ExamplePanel({
                 throw new Error("模板不是有效的 Draw.io XML")
             }
 
-            const error = loadDiagram(xml)
+            const error = loadDiagram(xml, true)
             if (error) throw new Error(error)
 
             setDiagramHistory([])
