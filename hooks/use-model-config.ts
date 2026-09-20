@@ -223,10 +223,16 @@ export function useModelConfig(): UseModelConfigReturn {
 
     // Actions
     const setSelectedModelId = useCallback((modelId: string | undefined) => {
-        setConfig((prev) => ({
-            ...prev,
-            selectedModelId: modelId,
-        }))
+        setConfig((prev) => {
+            const next = {
+                ...prev,
+                selectedModelId: modelId,
+            }
+            // Persist synchronously so an immediate Send click cannot read a stale
+            // selectedModelId from localStorage via getSelectedAIConfig().
+            saveConfig(next)
+            return next
+        })
     }, [])
 
     const setShowUnvalidatedModels = useCallback((show: boolean) => {
