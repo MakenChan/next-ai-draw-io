@@ -42,6 +42,46 @@ import { findServerModelById } from "@/lib/server-model-config"
 import { getSystemPrompt } from "@/lib/system-prompts"
 import { getUserIdFromRequest } from "@/lib/user-id"
 
+const SKILL_TEMPLATE_FILES = new Set([
+    "功能模块图.drawio",
+    "流程图.drawio",
+    "活动图.drawio",
+    "状态图.drawio",
+    "顺序图.drawio",
+    "用例图.drawio",
+    "类图.drawio",
+    "ERD_鸡爪图.drawio",
+    "ER图.drawio",
+    "数据流图.drawio",
+    "架构图.drawio",
+])
+
+async function loadReferencedSkillTemplate(
+    userText: string,
+): Promise<{ name: string; xml: string } | null> {
+    const matches = [...userText.matchAll(/「([^」]+\.drawio)」/g)]
+    const name = matches
+        .map((match) => match[1])
+        .find((candidate) => SKILL_TEMPLATE_FILES.has(candidate))
+
+    if (!name) return null
+
+    try {
+        const filePath = path.join(
+            process.cwd(),
+            "skills",
+            "drawio-uml-er-zh",
+            "template",
+            name,
+        )
+        const xml = await fs.readFile(filePath, "utf8")
+        return { name, xml }
+    } catch (error) {
+        console.warn("[skill-template] Failed to load reference template:", name, error)
+        return null
+    }
+}
+
 // No explicit cap: a reasoning model can spend minutes planning before it emits
 // the tool call, so take whatever the host allows. Vercel's own default is 300s,
 // which is also where Node's response-body timeout on the upstream stream lands.
@@ -118,6 +158,12 @@ async function handleChatRequest(req: Request): Promise<Response> {
         .find((m: any) => m.role === "user")
     const userInputText =
         lastUserMessage?.parts?.find((p: any) => p.type === "text")?.text || ""
+
+    // If a Skill prompt references one of our .drawio examples, load that exact
+    // template as hidden model context. It is a visual/layout reference only;
+    // the user's business description remains the source of business facts.
+    const referencedSkillTemplate =
+        await loadReferencedSkillTemplate(userInputText)
 
     // Update Langfuse trace with input, session, and user
     setTraceInput({
@@ -473,11 +519,25 @@ ${xml || ""}
 
 IMPORTANT: The "Current diagram XML" is the SINGLE SOURCE OF TRUTH for what's on the canvas right now. The user can manually add, delete, or modify shapes directly in draw.io. Always count and describe elements based on the CURRENT XML, not on what you previously generated. If both previous and current XML are shown, compare them to understand what the user changed. When using edit_diagram, COPY search patterns exactly from the CURRENT XML - attribute order matters!`
 
+    const referenceTemplateContext = referencedSkillTemplate
+        ? `Reference draw.io template: ${referencedSkillTemplate.name}
+"""xml
+${referencedSkillTemplate.xml}
+"""
+
+REFERENCE TEMPLATE RULES:
+- This template is a STYLE AND LAYOUT REFERENCE, not business truth.
+- Reuse its page sizing, visual hierarchy, node sizing, spacing, alignment, edge routing, and diagram-specific visual conventions when useful.
+- DO NOT copy example business names, states, entities, fields, actors, messages, technologies, or relationships unless the user's business description independently supports them.
+- The user's latest business description determines WHAT to draw. The reference template only helps determine HOW to draw it.
+- If the current canvas contains user-created content, preserve that content unless the user explicitly asks to replace it.`
+        : ""
+
     const systemMessages = isSingleSystemProvider
         ? [
               {
                   role: "system" as const,
-                  content: `${finalSystemMessage}\n\n${xmlContext}`,
+                  content: `${finalSystemMessage}\n\n${xmlContext}${referenceTemplateContext ? `\n\n${referenceTemplateContext}` : ""}`,
               },
           ]
         : [
@@ -501,6 +561,14 @@ IMPORTANT: The "Current diagram XML" is the SINGLE SOURCE OF TRUTH for what's on
                       },
                   }),
               },
+              ...(referenceTemplateContext
+                  ? [
+                        {
+                            role: "system" as const,
+                            content: referenceTemplateContext,
+                        },
+                    ]
+                  : []),
           ]
 
     const allMessages = [...systemMessages, ...enhancedMessages]
