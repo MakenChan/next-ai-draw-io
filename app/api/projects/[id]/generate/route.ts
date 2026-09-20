@@ -1,8 +1,8 @@
 import { generateText } from "ai"
-import { getAIModel } from "@/lib/ai-providers"
 import { createDiagram, getProject, getTask, setTaskStatus } from "@/lib/project-db"
 import { diagramPrompt, wrapProjectMxCells } from "@/lib/project-diagram-prompts"
 import { loadDiagramSkill } from "@/lib/project-skill-loader"
+import { getAIModelFromRequest } from "@/lib/request-ai-model"
 
 export const runtime="nodejs"
 export const maxDuration=300
@@ -18,13 +18,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
  const b=await req.json(); const task=getTask(String(b.taskId||"")); if(!task)return Response.json({error:"Task not found"},{status:404})
  setTaskStatus(task.id,"generating")
  try{
-  const {model,providerOptions,headers}=getAIModel({
-   provider:req.headers.get("x-ai-provider"),baseUrl:req.headers.get("x-ai-base-url"),
-   apiKey:req.headers.get("x-ai-api-key"),modelId:req.headers.get("x-ai-model"),
-   awsAccessKeyId:req.headers.get("x-aws-access-key-id"),awsSecretAccessKey:req.headers.get("x-aws-secret-access-key"),
-   awsRegion:req.headers.get("x-aws-region"),awsSessionToken:req.headers.get("x-aws-session-token"),
-   vertexApiKey:req.headers.get("x-vertex-api-key"),
-  })
+  const {model,providerOptions,headers}=await getAIModelFromRequest(req)
   const skillRules=await loadDiagramSkill(task.type)
   const result=await generateText({model,prompt:diagramPrompt(task.type,task.title,task.description||"",project.summaryText,skillRules),maxOutputTokens:16000,...(providerOptions&&{providerOptions}),...(headers&&{headers})})
   const cells=clean(result.text)
