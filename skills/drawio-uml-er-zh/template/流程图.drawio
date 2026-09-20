@@ -1,0 +1,67 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="login-flow" name="登录流程图">
+    <mxGraphModel dx="1426" dy="946" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="10" parent="1" style="rounded=1;arcSize=50;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;fontFamily=宋体;" value="开始" vertex="1">
+          <mxGeometry height="56" width="140" x="690" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="输入用户名和密码" vertex="1">
+          <mxGeometry height="56" width="260" x="630" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="1" style="rhombus;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="校验表单" vertex="1">
+          <mxGeometry height="100" width="160" x="680" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="提示补全信息" vertex="1">
+          <mxGeometry height="56" width="200" x="1010" y="252" as="geometry" />
+        </mxCell>
+        <mxCell id="14" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="提交登录请求" vertex="1">
+          <mxGeometry height="56" width="260" x="630" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="15" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="校验账号并生成令牌" vertex="1">
+          <mxGeometry height="56" width="260" x="630" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="1" style="rhombus;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="账号有效" vertex="1">
+          <mxGeometry height="100" width="160" x="680" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="返回错误信息" vertex="1">
+          <mxGeometry height="56" width="200" x="1010" y="592" as="geometry" />
+        </mxCell>
+        <mxCell id="18" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="保存 token 和用户信息" vertex="1">
+          <mxGeometry height="56" width="250" x="635" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="19" parent="1" style="rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;" value="跳转系统首页" vertex="1">
+          <mxGeometry height="56" width="240" x="640" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=1;arcSize=50;whiteSpace=wrap;html=0;fillColor=none;strokeColor=#000000;fontSize=16;fontFamily=宋体;" value="结束" vertex="1">
+          <mxGeometry height="56" width="140" x="690" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="30" edge="1" parent="1" source="10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="31" edge="1" parent="1" source="11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="12" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="32" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="13" value="否">
+          <mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="33" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="11" value="返回">
+          <mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /><Array as="points"><mxPoint x="1040" y="160" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="34" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="14" value="是">
+          <mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="35" edge="1" parent="1" source="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="15" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="36" edge="1" parent="1" source="15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="16" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="37" edge="1" parent="1" source="16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="17" value="否"><mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="38" edge="1" parent="1" source="17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="11" value="重试">
+          <mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /><Array as="points"><mxPoint x="1290" y="620" /><mxPoint x="1290" y="160" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="39" edge="1" parent="1" source="16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="18" value="是"><mxGeometry relative="1" as="geometry"><mxPoint y="-14" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="40" edge="1" parent="1" source="18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="19" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="41" edge="1" parent="1" source="19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#000000;endArrow=block;endFill=1;fontSize=14;" target="20" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
