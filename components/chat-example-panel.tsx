@@ -1,64 +1,39 @@
 "use client"
 
 import {
-    Cloud,
-    FileText,
+    Activity,
+    Boxes,
+    Database,
     GitBranch,
-    Palette,
-    Terminal,
-    Zap,
+    Network,
+    Share2,
+    Users,
+    Workflow,
 } from "lucide-react"
-import { useDictionary } from "@/hooks/use-dictionary"
-import { getAssetUrl } from "@/lib/base-path"
 
 interface ExampleCardProps {
     icon: React.ReactNode
     title: string
     description: string
     onClick: () => void
-    isNew?: boolean
 }
 
-function ExampleCard({
-    icon,
-    title,
-    description,
-    onClick,
-    isNew,
-}: ExampleCardProps) {
-    const dict = useDictionary()
-
+function ExampleCard({ icon, title, description, onClick }: ExampleCardProps) {
     return (
         <button
+            type="button"
             onClick={onClick}
-            className={`group w-full text-left p-4 rounded-xl border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm ${
-                isNew
-                    ? "border-primary/40 ring-1 ring-primary/20"
-                    : "border-border/60"
-            }`}
+            className="group w-full rounded-xl border border-border/60 bg-card p-3 text-left transition-all duration-200 hover:border-primary/30 hover:bg-accent/50 hover:shadow-sm"
         >
             <div className="flex items-start gap-3">
-                <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                        isNew
-                            ? "bg-primary/20 group-hover:bg-primary/25"
-                            : "bg-primary/10 group-hover:bg-primary/15"
-                    }`}
-                >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
                     {icon}
                 </div>
                 <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                            {title}
-                        </h3>
-                        {isNew && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded">
-                                {dict.common.new}
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                    <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                        {title}
+                    </h3>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                         {description}
                     </p>
                 </div>
@@ -66,6 +41,75 @@ function ExampleCard({
         </button>
     )
 }
+
+const SKILL_TEMPLATES = [
+    {
+        name: "功能模块图",
+        description: "按系统功能层级展示模块、子模块和功能分解。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「功能模块图.drawio」模板风格，生成一张中文功能模块图。先保持模板的版式、层级、间距和黑白风格，再根据我的后续描述替换模板内容。",
+        icon: Boxes,
+    },
+    {
+        name: "流程图",
+        description: "开始、处理、判断、分支、回环的标准业务流程图。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「流程图.drawio」模板风格，生成一张中文业务流程图。保持模板的节点样式、正交连线、判断分支标签和整体布局，再根据我的后续描述替换内容。",
+        icon: GitBranch,
+    },
+    {
+        name: "活动图",
+        description: "适合角色泳道、并发、分支与合并的 UML 活动图。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「活动图.drawio」模板风格，生成一张中文 UML 活动图。保持模板泳道、活动节点、分支合并和结束节点样式，再根据我的后续描述替换内容。",
+        icon: Activity,
+    },
+    {
+        name: "状态图",
+        description: "展示对象生命周期、状态以及事件驱动的状态迁移。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「状态图.drawio」模板风格，生成一张中文 UML 状态图。保持模板的初始状态、状态节点、迁移线和终止状态样式，再根据我的后续描述替换内容。",
+        icon: Workflow,
+    },
+    {
+        name: "顺序图",
+        description: "参与者、生命线、激活条、同步调用与返回消息。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「顺序图.drawio」模板风格，生成一张中文 UML 顺序图。保持模板的参与者、生命线、激活条、消息间距和返回虚线，再根据我的后续描述替换内容。",
+        icon: Share2,
+    },
+    {
+        name: "用例图",
+        description: "展示参与者、系统边界、用例和参与关系。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「用例图.drawio」模板风格，生成一张中文 UML 用例图。保持模板的 Actor、系统边界、用例椭圆和关系线布局，再根据我的后续描述替换内容。",
+        icon: Users,
+    },
+    {
+        name: "类图",
+        description: "类名、属性、方法以及继承、关联、依赖等关系。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「类图.drawio」模板风格，生成一张中文 UML 类图。每个类保持类名、属性、方法三区结构，只使用有依据的 UML 关系，再根据我的后续描述替换内容。",
+        icon: Boxes,
+    },
+    {
+        name: "ERD 鸡爪图",
+        description: "表、字段、PK/FK 和 Crow's Foot 基数关系。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「ERD_鸡爪图.drawio」模板风格，生成一张中文 Crow's Foot ERD。保持实体表、字段、PK/FK 和鸡爪基数标记的样式，再根据我的后续数据库结构替换内容。",
+        icon: Database,
+    },
+    {
+        name: "ER 图",
+        description: "实体、联系和基数表达的概念级 Chen ER 图。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「ER图.drawio」模板风格，生成一张中文 Chen ER 图。保持实体矩形、联系菱形和基数标注的模板样式，再根据我的后续描述替换内容。",
+        icon: Database,
+    },
+    {
+        name: "数据流图",
+        description: "外部实体、处理过程、数据存储以及数据流。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「数据流图.drawio」模板风格，生成一张中文 DFD 数据流图。保持模板的外部实体、处理过程、数据存储和带标签数据流样式，再根据我的后续描述替换内容。",
+        icon: Network,
+    },
+    {
+        name: "架构图",
+        description: "系统分层、组件、服务、数据库和外部依赖关系。",
+        prompt: "请使用 drawio-uml-er-zh Skill 中的「架构图.drawio」模板风格，生成一张中文系统架构图。保持模板的分层、组件间距、连接关系和整体黑白风格，再根据我的后续描述替换内容。",
+        icon: Boxes,
+    },
+] as const
 
 export default function ExamplePanel({
     setInput,
@@ -76,147 +120,48 @@ export default function ExamplePanel({
     setFiles: (files: File[]) => void
     minimal?: boolean
 }) {
-    const dict = useDictionary()
-
-    const handleReplicateFlowchart = async () => {
-        setInput("Replicate this flowchart.")
-
-        try {
-            const response = await fetch(getAssetUrl("/example.png"))
-            const blob = await response.blob()
-            const file = new File([blob], "example.png", { type: "image/png" })
-            setFiles([file])
-        } catch (error) {
-            console.error(dict.errors.failedToLoadExample, error)
-        }
-    }
-
-    const handleReplicateArchitecture = async () => {
-        setInput("Replicate this in aws style")
-
-        try {
-            const response = await fetch(getAssetUrl("/architecture.png"))
-            const blob = await response.blob()
-            const file = new File([blob], "architecture.png", {
-                type: "image/png",
-            })
-            setFiles([file])
-        } catch (error) {
-            console.error(dict.errors.failedToLoadExample, error)
-        }
-    }
-
-    const handlePdfExample = async () => {
-        setInput("Summarize this paper as a diagram")
-
-        try {
-            const response = await fetch(getAssetUrl("/chain-of-thought.txt"))
-            const blob = await response.blob()
-            const file = new File([blob], "chain-of-thought.txt", {
-                type: "text/plain",
-            })
-            setFiles([file])
-        } catch (error) {
-            console.error(dict.errors.failedToLoadExample, error)
-        }
+    const chooseTemplate = (prompt: string) => {
+        setInput(prompt)
+        setFiles([])
     }
 
     return (
-        <div className={minimal ? "" : "py-6 px-2 animate-fade-in"}>
+        <div className={minimal ? "" : "px-2 py-6 animate-fade-in"}>
             {!minimal && (
-                <>
-                    {/* MCP Server Notice */}
-                    <a
-                        href="https://github.com/DayuanJiang/next-ai-draw-io/tree/main/packages/mcp-server"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 hover:border-purple-500/40 transition-colors group"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
-                                <Terminal className="w-4 h-4 text-purple-500" />
-                            </div>
-                            <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-foreground group-hover:text-purple-500 transition-colors">
-                                        {dict.examples.mcpServer}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {dict.examples.mcpDescription}
-                                </p>
-                            </div>
-                        </div>
-                    </a>
-
-                    {/* Welcome section */}
-                    <div className="text-center mb-6">
-                        <h2 className="text-lg font-semibold text-foreground mb-2">
-                            {dict.examples.title}
-                        </h2>
-                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                            {dict.examples.subtitle}
-                        </p>
-                    </div>
-                </>
+                <div className="mb-5 text-center">
+                    <h2 className="mb-2 text-lg font-semibold text-foreground">
+                        Skill 模板图
+                    </h2>
+                    <p className="mx-auto max-w-xs text-sm text-muted-foreground">
+                        选择你上传的 drawio-uml-er-zh 模板作为制图起点
+                    </p>
+                </div>
             )}
 
-            {/* Examples grid */}
             <div className="space-y-3">
                 {!minimal && (
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
-                        {dict.examples.quickExamples}
+                    <p className="px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        快速示例
                     </p>
                 )}
 
                 <div className="grid gap-2">
-                    <ExampleCard
-                        icon={<FileText className="w-4 h-4 text-primary" />}
-                        title={dict.examples.paperToDiagram}
-                        description={dict.examples.paperDescription}
-                        onClick={handlePdfExample}
-                        isNew
-                    />
-
-                    <ExampleCard
-                        icon={<Zap className="w-4 h-4 text-primary" />}
-                        title={dict.examples.animatedDiagram}
-                        description={dict.examples.animatedDescription}
-                        onClick={() => {
-                            setInput(
-                                "Give me a **animated connector** diagram of transformer's architecture",
-                            )
-                            setFiles([])
-                        }}
-                    />
-
-                    <ExampleCard
-                        icon={<Cloud className="w-4 h-4 text-primary" />}
-                        title={dict.examples.awsArchitecture}
-                        description={dict.examples.awsDescription}
-                        onClick={handleReplicateArchitecture}
-                    />
-
-                    <ExampleCard
-                        icon={<GitBranch className="w-4 h-4 text-primary" />}
-                        title={dict.examples.replicateFlowchart}
-                        description={dict.examples.replicateDescription}
-                        onClick={handleReplicateFlowchart}
-                    />
-
-                    <ExampleCard
-                        icon={<Palette className="w-4 h-4 text-primary" />}
-                        title={dict.examples.creativeDrawing}
-                        description={dict.examples.creativeDescription}
-                        onClick={() => {
-                            setInput("Draw a cat for me")
-                            setFiles([])
-                        }}
-                    />
+                    {SKILL_TEMPLATES.map((template) => {
+                        const Icon = template.icon
+                        return (
+                            <ExampleCard
+                                key={template.name}
+                                icon={<Icon className="h-4 w-4 text-primary" />}
+                                title={template.name}
+                                description={template.description}
+                                onClick={() => chooseTemplate(template.prompt)}
+                            />
+                        )
+                    })}
                 </div>
 
-                <p className="text-[11px] text-muted-foreground/60 text-center mt-4">
-                    {dict.examples.cachedNote}
+                <p className="mt-4 text-center text-[11px] text-muted-foreground/60">
+                    点击模板后，可继续补充业务、数据库或系统说明再发送
                 </p>
             </div>
         </div>
