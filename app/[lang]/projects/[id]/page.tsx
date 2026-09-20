@@ -4,9 +4,28 @@ import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ProjectSummaryTools } from "@/components/project-summary-tools"
+import { getSelectedAIConfig } from "@/hooks/use-model-config"
 import type { DiagramPlan, DiagramPlanItem, Project, ProjectChatMessage, ProjectChatSession, ProjectDiagram } from "@/lib/project-types"
 
 type Tab="summary"|"chat"|"plan"|"diagrams"
+
+function getProjectAIHeaders(): Record<string, string> {
+ const config=getSelectedAIConfig()
+ return {
+  "content-type":"application/json",
+  ...(config.accessCode&&{"x-access-code":config.accessCode}),
+  ...(config.aiProvider&&{"x-ai-provider":config.aiProvider}),
+  ...(config.aiBaseUrl&&{"x-ai-base-url":config.aiBaseUrl}),
+  ...(config.aiApiKey&&{"x-ai-api-key":config.aiApiKey}),
+  ...(config.aiModel&&{"x-ai-model":config.aiModel}),
+  ...(config.awsAccessKeyId&&{"x-aws-access-key-id":config.awsAccessKeyId}),
+  ...(config.awsSecretAccessKey&&{"x-aws-secret-access-key":config.awsSecretAccessKey}),
+  ...(config.awsRegion&&{"x-aws-region":config.awsRegion}),
+  ...(config.awsSessionToken&&{"x-aws-session-token":config.awsSessionToken}),
+  ...(config.vertexApiKey&&{"x-vertex-api-key":config.vertexApiKey}),
+  ...(config.selectedModelId&&{"x-selected-model-id":config.selectedModelId}),
+ }
+}
 export default function ProjectDetailPage(){
  const p=useParams<{lang:string;id:string}>(),router=useRouter()
  const [project,setProject]=useState<Project|null>(null),[tab,setTab]=useState<Tab>("summary"),[summary,setSummary]=useState(""),[saved,setSaved]=useState(false)
@@ -17,11 +36,11 @@ export default function ProjectDetailPage(){
  async function saveSummary(){setBusy(true);const x=await fetch(`/api/projects/${p.id}/summary`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({summaryText:summary})}).then(r=>r.json());if(x.project){setProject(x.project);setSaved(true)}setBusy(false)}
  async function newSession(){const x=await fetch(`/api/projects/${p.id}/chats`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({title:`项目讨论 ${sessions.length+1}`})}).then(r=>r.json());setSessions(v=>[x.session,...v]);setSession(x.session);setMessages([])}
  async function openSession(s:ProjectChatSession){setSession(s);setMessages((await fetch(`/api/project-chats/${s.id}/messages`).then(r=>r.json())).messages||[])}
- async function sendChat(){if(!chatText.trim()||!session)return;const text=chatText;setChatText("");setChatBusy(true);const x=await fetch(`/api/projects/${p.id}/chat`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sessionId:session.id,message:text})}).then(r=>r.json());await openSession(session);if(x.error)setError(x.error);setChatBusy(false)}
- async function makePlan(){setError("");const x=await fetch(`/api/projects/${p.id}/plans`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({requestText:request})}).then(r=>r.json());if(x.error)return setError(x.error);setActivePlan(x.plan);setPlans(v=>[x.plan,...v])}
+ async function sendChat(){if(!chatText.trim()||!session)return;const text=chatText;setChatText("");setChatBusy(true);const x=await fetch(`/api/projects/${p.id}/chat`,{method:"POST",headers:getProjectAIHeaders(),body:JSON.stringify({sessionId:session.id,message:text})}).then(r=>r.json());await openSession(session);if(x.error)setError(x.error);setChatBusy(false)}
+ async function makePlan(){setError("");const x=await fetch(`/api/projects/${p.id}/plans`,{method:"POST",headers:getProjectAIHeaders(),body:JSON.stringify({requestText:request})}).then(r=>r.json());if(x.error)return setError(x.error);setActivePlan(x.plan);setPlans(v=>[x.plan,...v])}
  function patchItem(id:string,patch:Partial<DiagramPlanItem>){if(activePlan)setActivePlan({...activePlan,items:activePlan.items.map(x=>x.id===id?{...x,...patch}:x)})}
  async function savePlan(){if(!activePlan)return;const x=await fetch(`/api/project-plans/${activePlan.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({items:activePlan.items})}).then(r=>r.json());setActivePlan(x.plan)}
- async function generateAll(){if(!activePlan)return;setBusy(true);setError("");await savePlan();const latest=(await fetch(`/api/project-plans/${activePlan.id}`).then(r=>r.json())).plan as DiagramPlan;await fetch(`/api/project-plans/${latest.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({status:"generating"})});let cursor=0;async function worker(){while(cursor<latest.items.length){const item=latest.items[cursor++];const x=await fetch(`/api/projects/${p.id}/generate`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({taskId:item.id})}).then(r=>r.json());if(x.error)setError(e=>e?e+"\n"+x.error:x.error)}}await Promise.all([worker(),worker()]);await fetch(`/api/project-plans/${latest.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({status:"completed"})});setBusy(false);await refresh();setTab("diagrams")}
+ async function generateAll(){if(!activePlan)return;setBusy(true);setError("");await savePlan();const latest=(await fetch(`/api/project-plans/${activePlan.id}`).then(r=>r.json())).plan as DiagramPlan;await fetch(`/api/project-plans/${latest.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({status:"generating"})});let cursor=0;async function worker(){while(cursor<latest.items.length){const item=latest.items[cursor++];const x=await fetch(`/api/projects/${p.id}/generate`,{method:"POST",headers:getProjectAIHeaders(),body:JSON.stringify({taskId:item.id})}).then(r=>r.json());if(x.error)setError(e=>e?e+"\n"+x.error:x.error)}}await Promise.all([worker(),worker()]);await fetch(`/api/project-plans/${latest.id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({status:"completed"})});setBusy(false);await refresh();setTab("diagrams")}
  if(!project)return <main className="p-10">加载项目...</main>
  const nav=[["summary",FileText,"项目总结"],["chat",MessageSquare,"聊天记录"],["plan",Sparkles,"制图计划"],["diagrams",Images,`图表库 (${diagrams.length})`]] as const
  return <main className="min-h-screen bg-background p-4 md:p-6"><div className="mx-auto max-w-7xl space-y-4">
