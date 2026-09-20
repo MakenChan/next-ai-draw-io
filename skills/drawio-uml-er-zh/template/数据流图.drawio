@@ -1,0 +1,40 @@
+<mxfile host="Electron" version="29.6.1">
+  <diagram id="dfd-context-redraw" name="数据流图-顶层">
+    <mxGraphModel dx="1426" dy="946" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1260" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e1" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;" value="学生" vertex="1">
+          <mxGeometry height="60" width="140" x="50" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;" value="教师" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;" value="管理员" vertex="1">
+          <mxGeometry height="60" width="140" x="830" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="fontFamily=宋体;rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;" value="P0 智能作业批改与个性化学习推荐系统" vertex="1">
+          <mxGeometry height="90" width="290" x="380" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="f1" edge="1" parent="1" source="e1" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="p0" value="提交作业/查询请求">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="205" /><mxPoint x="260" y="270" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f2" edge="1" parent="1" source="p0" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="e1" value="成绩反馈/学习推荐">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="290" y="300" /><mxPoint x="290" y="310" /><mxPoint x="120" y="310" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f3" edge="1" parent="1" source="e2" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="p0" value="作业发布/统计请求">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="535" y="450" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f4" edge="1" parent="1" source="p0" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="e2" value="教学统计/班级概览">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="430" y="370" /><mxPoint x="130" y="370" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f5" edge="1" parent="1" source="e3" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="p0" value="认证/健康检查请求">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="960" y="265" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="f6" edge="1" parent="1" source="p0" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;orthogonalLoop=1;jettySize=auto;rounded=0;endArrow=block;endFill=1;html=1;strokeColor=#000000;fontSize=15;" target="e3" value="系统状态响应">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="580" y="420" /><mxPoint x="890" y="420" /></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
