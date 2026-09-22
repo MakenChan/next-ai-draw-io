@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import {
+    FolderOpen,
     FolderPlus,
     MessageSquarePlus,
     PanelRightClose,
@@ -23,6 +24,7 @@ import { Toaster, toast } from "sonner"
 import { ButtonWithTooltip } from "@/components/button-with-tooltip"
 import { ChatInput } from "@/components/chat-input"
 import Image from "@/components/image-with-basepath"
+import { LocalDrawioFolderPanel } from "@/components/local-drawio-folder-panel"
 import { ModelConfigDialog } from "@/components/model-config-dialog"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { useDiagram } from "@/contexts/diagram-context"
@@ -164,6 +166,7 @@ export default function ChatPanel({
     const [urlData, setUrlData] = useState<Map<string, UrlData>>(new Map())
 
     const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+    const [showLocalFiles, setShowLocalFiles] = useState(false)
     const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)
     const [projectName, setProjectName] = useState("")
     const [projectDescription, setProjectDescription] = useState("")
@@ -1406,6 +1409,17 @@ ${data.content}`
                         </div>
                     </button>
                     <div className="flex items-center gap-1 justify-end overflow-visible">
+                        <ButtonWithTooltip
+                            tooltipContent={showLocalFiles ? "返回 AI 对话" : "本地 Draw.io 文件"}
+                            variant={showLocalFiles ? "secondary" : "ghost"}
+                            size="icon"
+                            onClick={() => setShowLocalFiles((value) => !value)}
+                            className="hover:bg-accent"
+                            data-testid="local-drawio-files-button"
+                        >
+                            <FolderOpen className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-muted-foreground`} />
+                        </ButtonWithTooltip>
+
                         <ButtonWithTooltip tooltipContent="项目工作区" variant="ghost" size="icon" onClick={() => setShowCreateProjectDialog(true)} className="hover:bg-accent" data-testid="project-workspace-button">
                             <FolderPlus className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-muted-foreground`} />
                         </ButtonWithTooltip>
@@ -1455,8 +1469,13 @@ ${data.content}`
                 </div>
             </header>
 
-            {/* Messages */}
+            {/* AI chat / local Draw.io files */}
             <main className="flex-1 w-full overflow-hidden">
+                {showLocalFiles ? (
+                    <div className="h-full p-2">
+                        <LocalDrawioFolderPanel />
+                    </div>
+                ) : (
                 <ChatMessageDisplay
                     messages={messages}
                     setInput={setInput}
@@ -1477,6 +1496,7 @@ ${data.content}`
                     onSendTemplate={handleSendTemplate}
                     currentInput={input}
                 />
+                )}
             </main>
 
             {/* Dev XML Streaming Simulator - only in development */}
@@ -1491,6 +1511,7 @@ ${data.content}`
             )}
 
             {/* Input */}
+            {!showLocalFiles && (
             <footer
                 className={`${isMobile ? "p-2" : "p-4"} border-t border-border/50 bg-card/50`}
             >
@@ -1516,6 +1537,7 @@ ${data.content}`
                     onFocused={() => setShouldFocusInput(false)}
                 />
             </footer>
+            )}
 
             {showCreateProjectDialog && (
                 <div className="absolute inset-0 z-[100] flex items-start justify-end bg-black/20 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowCreateProjectDialog(false) }}>
