@@ -1,5 +1,0 @@
-import { getPlan, replacePlanItems, setPlanStatus } from "@/lib/project-db"
-import { DIAGRAM_TYPES } from "@/lib/project-types"
-export const runtime="nodejs"
-export async function GET(_r:Request,{params}:{params:Promise<{planId:string}>}){const {planId}=await params;const plan=getPlan(planId);return plan?Response.json({plan}):Response.json({error:"Not found"},{status:404})}
-export async function PATCH(req:Request,{params}:{params:Promise<{planId:string}>}){const {planId}=await params;const b=await req.json();if(Array.isArray(b.items)){const items=b.items.filter((x:any)=>DIAGRAM_TYPES.includes(x.type)&&String(x.title||"").trim()).map((x:any)=>({id:x.id,type:x.type,title:String(x.title),description:String(x.description||""),evidence:Array.isArray(x.evidence)?x.evidence:[]}));return Response.json({plan:replacePlanItems(planId,items)})}if(typeof b.status==="string"){setPlanStatus(planId,b.status);return Response.json({plan:getPlan(planId)})}return Response.json({error:"Nothing to update"},{status:400})}
