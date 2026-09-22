@@ -1473,7 +1473,9 @@ ${data.content}`
             <main className="flex-1 w-full overflow-hidden">
                 {showLocalFiles ? (
                     <div className="h-full p-2">
-                        <LocalDrawioFolderPanel />
+                        <LocalDrawioFolderPanel
+                            onFileOpened={() => setShowLocalFiles(false)}
+                        />
                     </div>
                 ) : (
                 <ChatMessageDisplay
