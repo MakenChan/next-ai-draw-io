@@ -24,6 +24,7 @@ import { ButtonWithTooltip } from "@/components/button-with-tooltip"
 import { ChatInput } from "@/components/chat-input"
 import Image from "@/components/image-with-basepath"
 import { LocalDrawioFolderPanel } from "@/components/local-drawio-folder-panel"
+import { LocalDrawioFileSwitcher } from "@/components/local-drawio-file-switcher"
 import { ModelConfigDialog } from "@/components/model-config-dialog"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { useDiagram } from "@/contexts/diagram-context"
@@ -1432,6 +1433,8 @@ ${data.content}`
                     </div>
                 </div>
             </header>
+
+            {!showLocalFiles && <LocalDrawioFileSwitcher />}
 
             {/* AI chat / local Draw.io files */}
             <main className="flex-1 w-full overflow-hidden">
