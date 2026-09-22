@@ -107,8 +107,8 @@ export function ChatLobby({
     currentInput = "",
     dict,
 }: ChatLobbyProps) {
-    const [templatesExpanded, setTemplatesExpanded] = useState(true)
-    const [examplesExpanded, setExamplesExpanded] = useState(true)
+    const [templatesExpanded, setTemplatesExpanded] = useState(false)
+    const [examplesExpanded, setExamplesExpanded] = useState(false)
     const [panelVisibility, setPanelVisibility] = useState(getPanelVisibility)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
@@ -129,17 +129,65 @@ export function ChatLobby({
             return null
         }
         return (
-            <div className="animate-fade-in">
+            <div className="py-6 px-2 animate-fade-in">
                 {panelVisibility.myTemplates && (
-                    <TemplatePanel
-                        setInput={setInput}
-                        onSendTemplate={onSendTemplate}
-                        currentInput={currentInput}
-                    />
+                    <div className="border-t border-border/50 pt-4 first:border-t-0 first:pt-0">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setTemplatesExpanded(!templatesExpanded)
+                            }
+                            className="w-full flex items-center justify-between px-1 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                        >
+                            <span>
+                                {dict.templates?.myTemplates || "My Templates"}
+                            </span>
+                            {templatesExpanded ? (
+                                <ChevronUp className="w-4 h-4" />
+                            ) : (
+                                <ChevronDown className="w-4 h-4" />
+                            )}
+                        </button>
+                        {templatesExpanded && (
+                            <div className="mt-2">
+                                <TemplatePanel
+                                    setInput={setInput}
+                                    onSendTemplate={onSendTemplate}
+                                    currentInput={currentInput}
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
+
                 {panelVisibility.quickExamples && (
-                    <div className={panelVisibility.myTemplates ? "mt-6" : ""}>
-                        <ExamplePanel setInput={setInput} setFiles={setFiles} />
+                    <div className="border-t border-border/50 pt-4 mt-4">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setExamplesExpanded(!examplesExpanded)
+                            }
+                            className="w-full flex items-center justify-between px-1 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                        >
+                            <span>
+                                {dict.examples?.quickExamples ||
+                                    "Quick Examples"}
+                            </span>
+                            {examplesExpanded ? (
+                                <ChevronUp className="w-4 h-4" />
+                            ) : (
+                                <ChevronDown className="w-4 h-4" />
+                            )}
+                        </button>
+                        {examplesExpanded && (
+                            <div className="mt-2">
+                                <ExamplePanel
+                                    setInput={setInput}
+                                    setFiles={setFiles}
+                                    minimal
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
