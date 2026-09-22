@@ -2,10 +2,13 @@
 
 import {
     ChevronRight,
+    Eye,
     FileCode2,
     FolderOpen,
+    Pencil,
     RefreshCw,
     Save,
+    Trash2,
 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -23,6 +26,7 @@ type DrawioFileEntry = {
     name: string
     relativePath: string
     handle: FileSystemFileHandle
+    parentHandle: FileSystemDirectoryHandle
 }
 
 type DirectoryPickerWindow = Window & {
@@ -60,6 +64,7 @@ async function collectDrawioFiles(
                 name,
                 relativePath,
                 handle: handle as FileSystemFileHandle,
+                parentHandle: directory,
             })
         }
     }
@@ -81,6 +86,7 @@ export function LocalDrawioFolderPanel({
     const [activeFile, setActiveFile] = useState<DrawioFileEntry | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [expandedPath, setExpandedPath] = useState<string | null>(null)
     const lastSavedXmlRef = useRef("")
     const restoredRef = useRef(false)
 
@@ -179,7 +185,7 @@ export function LocalDrawioFolderPanel({
     }, [refreshFiles, setDiagramHistory])
 
     const openFile = useCallback(
-        async (entry: DrawioFileEntry) => {
+        async (entry: DrawioFileEntry, enterChat = false) => {
             if (
                 dirty &&
                 activeFile &&
@@ -206,10 +212,12 @@ export function LocalDrawioFolderPanel({
                 await saveActiveDrawioRelativePath(entry.relativePath)
                 setDiagramHistory([])
                 toast.success(`已打开：${entry.name}`)
-                onFileOpened?.({
-                    name: entry.name,
-                    relativePath: entry.relativePath,
-                })
+                if (enterChat) {
+                    onFileOpened?.({
+                        name: entry.name,
+                        relativePath: entry.relativePath,
+                    })
+                }
             } catch (error) {
                 console.error("[drawio-folder] Failed to open file", error)
                 toast.error(
@@ -220,6 +228,110 @@ export function LocalDrawioFolderPanel({
             }
         },
         [activeFile, dirty, loadDiagram, onFileOpened, setDiagramHistory],
+    )
+
+    const renameFile = useCallback(
+        async (entry: DrawioFileEntry) => {
+            const currentBaseName = entry.name.replace(/\.drawio(?:\.xml)?$/i, "")
+            const suffix = entry.name.toLowerCase().endsWith(".drawio.xml")
+                ? ".drawio.xml"
+                : ".drawio"
+            const nextBaseName = window.prompt("请输入新的文件名", currentBaseName)
+            if (!nextBaseName?.trim()) return
+
+            const sanitizedBaseName = nextBaseName
+                .trim()
+                .replace(/[\\/:*?"<>|]/g, "-")
+            const nextName = sanitizedBaseName.toLowerCase().endsWith(suffix)
+                ? sanitizedBaseName
+                : `${sanitizedBaseName}${suffix}`
+
+            if (nextName === entry.name) return
+
+            try {
+                try {
+                    await entry.parentHandle.getFileHandle(nextName)
+                    toast.error("同目录下已存在同名文件")
+                    return
+                } catch {
+                    // Expected when the target file does not exist.
+                }
+
+                const sourceFile = await entry.handle.getFile()
+                const xml = await sourceFile.text()
+                const nextHandle = await entry.parentHandle.getFileHandle(
+                    nextName,
+                    { create: true },
+                )
+                const writable = await nextHandle.createWritable()
+                await writable.write(xml)
+                await writable.close()
+                await entry.parentHandle.removeEntry(entry.name)
+
+                const parentPath = entry.relativePath.includes("/")
+                    ? entry.relativePath.slice(
+                          0,
+                          entry.relativePath.lastIndexOf("/") + 1,
+                      )
+                    : ""
+                const nextRelativePath = `${parentPath}${nextName}`
+                const nextFiles = await refreshFiles()
+
+                if (activeFile?.relativePath === entry.relativePath) {
+                    const nextEntry = nextFiles.find(
+                        (item) => item.relativePath === nextRelativePath,
+                    )
+                    if (nextEntry) {
+                        setActiveFile(nextEntry)
+                        await saveActiveDrawioRelativePath(nextRelativePath)
+                    }
+                }
+
+                setExpandedPath(nextRelativePath)
+                toast.success(`已重命名：${nextName}`)
+            } catch (error) {
+                console.error("[drawio-folder] Failed to rename file", error)
+                toast.error(
+                    error instanceof Error ? error.message : "重命名失败",
+                )
+            }
+        },
+        [activeFile, refreshFiles],
+    )
+
+    const deleteFile = useCallback(
+        async (entry: DrawioFileEntry) => {
+            const isActive = activeFile?.relativePath === entry.relativePath
+            const dirtyWarning = isActive && dirty ? "（当前有未保存修改）" : ""
+            if (
+                !window.confirm(
+                    `确定删除“${entry.name}”吗？${dirtyWarning}此操作无法撤销。`,
+                )
+            ) {
+                return
+            }
+
+            try {
+                await entry.parentHandle.removeEntry(entry.name)
+
+                if (isActive) {
+                    setActiveFile(null)
+                    lastSavedXmlRef.current = ""
+                    await saveActiveDrawioRelativePath(null)
+                    setDiagramHistory([])
+                }
+
+                setExpandedPath(null)
+                await refreshFiles()
+                toast.success(`已删除：${entry.name}`)
+            } catch (error) {
+                console.error("[drawio-folder] Failed to delete file", error)
+                toast.error(
+                    error instanceof Error ? error.message : "删除失败",
+                )
+            }
+        },
+        [activeFile, dirty, refreshFiles, setDiagramHistory],
     )
 
     const saveCurrentFile = useCallback(async () => {
@@ -334,25 +446,91 @@ export function LocalDrawioFolderPanel({
                         {files.map((entry) => {
                             const selected =
                                 activeFile?.relativePath === entry.relativePath
+                            const expanded = expandedPath === entry.relativePath
+
                             return (
-                                <button
-                                    type="button"
-                                    key={entry.relativePath}
-                                    onClick={() => void openFile(entry)}
-                                    className={cn(
-                                        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs transition-colors",
-                                        selected
-                                            ? "bg-accent font-medium text-accent-foreground"
-                                            : "hover:bg-accent/60",
+                                <div key={entry.relativePath}>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setExpandedPath(
+                                                expanded
+                                                    ? null
+                                                    : entry.relativePath,
+                                            )
+                                        }
+                                        className={cn(
+                                            "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs transition-colors",
+                                            selected
+                                                ? "bg-accent font-medium text-accent-foreground"
+                                                : "hover:bg-accent/60",
+                                        )}
+                                        title={entry.relativePath}
+                                    >
+                                        <FileCode2 className="size-4 shrink-0 text-muted-foreground" />
+                                        <span className="min-w-0 flex-1 truncate">
+                                            {entry.relativePath}
+                                        </span>
+                                        <ChevronRight
+                                            className={cn(
+                                                "size-3.5 shrink-0 transition-transform opacity-60",
+                                                expanded && "rotate-90",
+                                            )}
+                                        />
+                                    </button>
+
+                                    {expanded && (
+                                        <div className="mb-1 ml-6 mt-1 grid grid-cols-4 gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 px-2 text-xs"
+                                                onClick={() =>
+                                                    void openFile(entry, false)
+                                                }
+                                            >
+                                                <Eye className="size-3.5" />
+                                                预览
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 px-2 text-xs"
+                                                onClick={() =>
+                                                    void openFile(entry, true)
+                                                }
+                                            >
+                                                <Pencil className="size-3.5" />
+                                                编辑
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 px-2 text-xs"
+                                                onClick={() =>
+                                                    void renameFile(entry)
+                                                }
+                                            >
+                                                重命名
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                                                onClick={() =>
+                                                    void deleteFile(entry)
+                                                }
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                                删除
+                                            </Button>
+                                        </div>
                                     )}
-                                    title={entry.relativePath}
-                                >
-                                    <FileCode2 className="size-4 shrink-0 text-muted-foreground" />
-                                    <span className="min-w-0 flex-1 truncate">
-                                        {entry.relativePath}
-                                    </span>
-                                    <ChevronRight className="size-3.5 shrink-0 opacity-0 group-hover:opacity-60" />
-                                </button>
+                                </div>
                             )
                         })}
                     </div>
