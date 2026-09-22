@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { DrawIoEmbed } from "react-drawio"
 import type { ImperativePanelHandle } from "react-resizable-panels"
 import ChatPanel from "@/components/chat-panel"
+import { LocalDrawioFolderPanel } from "@/components/local-drawio-folder-panel"
 import {
     ResizableHandle,
     ResizablePanel,
@@ -162,9 +163,25 @@ export default function Home() {
                 direction={isMobile ? "vertical" : "horizontal"}
                 className="h-full"
             >
+                {!isMobile && (
+                    <>
+                        <ResizablePanel
+                            id="local-files-panel"
+                            defaultSize={16}
+                            minSize={12}
+                            maxSize={28}
+                        >
+                            <div className="h-full py-2 pl-2">
+                                <LocalDrawioFolderPanel />
+                            </div>
+                        </ResizablePanel>
+                        <ResizableHandle withHandle />
+                    </>
+                )}
+
                 <ResizablePanel
                     id="drawio-panel"
-                    defaultSize={isMobile ? 50 : 67}
+                    defaultSize={isMobile ? 50 : 51}
                     minSize={20}
                 >
                     <div
