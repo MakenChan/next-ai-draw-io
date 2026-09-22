@@ -12,6 +12,12 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useDiagram } from "@/contexts/diagram-context"
 import { cn } from "@/lib/utils"
+import {
+    getActiveDrawioRelativePath,
+    getLocalDrawioDirectoryHandle,
+    saveActiveDrawioRelativePath,
+    saveLocalDrawioDirectoryHandle,
+} from "@/lib/local-drawio-folder-storage"
 
 type DrawioFileEntry = {
     name: string
@@ -63,7 +69,11 @@ async function collectDrawioFiles(
     )
 }
 
-export function LocalDrawioFolderPanel() {
+export function LocalDrawioFolderPanel({
+    onFileOpened,
+}: {
+    onFileOpened?: (entry: { name: string; relativePath: string }) => void
+}) {
     const { chartXML, loadDiagram, setDiagramHistory } = useDiagram()
     const [directoryHandle, setDirectoryHandle] =
         useState<FileSystemDirectoryHandle | null>(null)
@@ -72,6 +82,7 @@ export function LocalDrawioFolderPanel() {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const lastSavedXmlRef = useRef("")
+    const restoredRef = useRef(false)
 
     const supported =
         typeof window !== "undefined" &&
@@ -84,20 +95,64 @@ export function LocalDrawioFolderPanel() {
 
     const refreshFiles = useCallback(
         async (handle = directoryHandle) => {
-            if (!handle) return
+            if (!handle) return []
             setLoading(true)
             try {
                 const nextFiles = await collectDrawioFiles(handle)
                 setFiles(nextFiles)
+                return nextFiles
             } catch (error) {
                 console.error("[drawio-folder] Failed to scan folder", error)
                 toast.error("读取文件夹失败")
+                return []
             } finally {
                 setLoading(false)
             }
         },
         [directoryHandle],
     )
+
+    useEffect(() => {
+        if (restoredRef.current) return
+        restoredRef.current = true
+
+        void (async () => {
+            try {
+                const handle = await getLocalDrawioDirectoryHandle()
+                if (!handle) return
+
+                const permissionHandle = handle as FileSystemDirectoryHandle & {
+                    queryPermission?: (options?: {
+                        mode?: "read" | "readwrite"
+                    }) => Promise<PermissionState>
+                }
+                const permission = permissionHandle.queryPermission
+                    ? await permissionHandle.queryPermission({ mode: "readwrite" })
+                    : "granted"
+
+                setDirectoryHandle(handle)
+                if (permission !== "granted") return
+
+                const restoredFiles = await refreshFiles(handle)
+                const activePath = await getActiveDrawioRelativePath()
+                if (!activePath) return
+
+                const entry = restoredFiles.find(
+                    (file) => file.relativePath === activePath,
+                )
+                if (!entry) return
+
+                setActiveFile(entry)
+                const file = await entry.handle.getFile()
+                lastSavedXmlRef.current = await file.text()
+            } catch (error) {
+                console.warn(
+                    "[drawio-folder] Failed to restore previous folder",
+                    error,
+                )
+            }
+        })()
+    }, [refreshFiles])
 
     const openFolder = useCallback(async () => {
         const picker = (window as DirectoryPickerWindow).showDirectoryPicker
@@ -111,6 +166,8 @@ export function LocalDrawioFolderPanel() {
             setDirectoryHandle(handle)
             setActiveFile(null)
             lastSavedXmlRef.current = ""
+            await saveLocalDrawioDirectoryHandle(handle)
+            await saveActiveDrawioRelativePath(null)
             setDiagramHistory([])
             await refreshFiles(handle)
         } catch (error) {
@@ -146,8 +203,13 @@ export function LocalDrawioFolderPanel() {
 
                 lastSavedXmlRef.current = xml
                 setActiveFile(entry)
+                await saveActiveDrawioRelativePath(entry.relativePath)
                 setDiagramHistory([])
                 toast.success(`已打开：${entry.name}`)
+                onFileOpened?.({
+                    name: entry.name,
+                    relativePath: entry.relativePath,
+                })
             } catch (error) {
                 console.error("[drawio-folder] Failed to open file", error)
                 toast.error(
@@ -157,7 +219,7 @@ export function LocalDrawioFolderPanel() {
                 setLoading(false)
             }
         },
-        [activeFile, dirty, loadDiagram, setDiagramHistory],
+        [activeFile, dirty, loadDiagram, onFileOpened, setDiagramHistory],
     )
 
     const saveCurrentFile = useCallback(async () => {
