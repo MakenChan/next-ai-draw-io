@@ -7,7 +7,7 @@ import {
     RefreshCw,
     Save,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useDiagram } from "@/contexts/diagram-context"
@@ -78,10 +78,9 @@ export function LocalDrawioFolderPanel() {
         typeof (window as DirectoryPickerWindow).showDirectoryPicker ===
             "function"
 
-    const dirty = useMemo(() => {
-        if (!activeFile) return false
-        return chartXML.trim() !== lastSavedXmlRef.current.trim()
-    }, [activeFile, chartXML])
+    const dirty = activeFile
+        ? chartXML.trim() !== lastSavedXmlRef.current.trim()
+        : false
 
     const refreshFiles = useCallback(
         async (handle = directoryHandle) => {
