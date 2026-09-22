@@ -449,7 +449,15 @@ export function LocalDrawioFolderPanel({
                             const expanded = expandedPath === entry.relativePath
 
                             return (
-                                <div key={entry.relativePath}>
+                                <div
+                                    key={entry.relativePath}
+                                    className={cn(
+                                        "flex w-full items-center gap-1 rounded-md px-1 py-1 transition-colors",
+                                        selected
+                                            ? "bg-accent text-accent-foreground"
+                                            : "hover:bg-accent/60",
+                                    )}
+                                >
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -459,16 +467,16 @@ export function LocalDrawioFolderPanel({
                                                     : entry.relativePath,
                                             )
                                         }
-                                        className={cn(
-                                            "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs transition-colors",
-                                            selected
-                                                ? "bg-accent font-medium text-accent-foreground"
-                                                : "hover:bg-accent/60",
-                                        )}
+                                        className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1.5 text-left text-xs"
                                         title={entry.relativePath}
                                     >
                                         <FileCode2 className="size-4 shrink-0 text-muted-foreground" />
-                                        <span className="min-w-0 flex-1 truncate">
+                                        <span
+                                            className={cn(
+                                                "min-w-0 flex-1 truncate",
+                                                selected && "font-medium",
+                                            )}
+                                        >
                                             {entry.relativePath}
                                         </span>
                                         <ChevronRight
@@ -480,12 +488,12 @@ export function LocalDrawioFolderPanel({
                                     </button>
 
                                     {expanded && (
-                                        <div className="mb-1 ml-6 mt-1 grid grid-cols-4 gap-1">
+                                        <div className="flex shrink-0 items-center gap-0.5">
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-8 px-2 text-xs"
+                                                className="h-7 gap-1 px-2 text-[11px]"
                                                 onClick={() =>
                                                     void openFile(entry, false)
                                                 }
@@ -497,7 +505,7 @@ export function LocalDrawioFolderPanel({
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-8 px-2 text-xs"
+                                                className="h-7 gap-1 px-2 text-[11px]"
                                                 onClick={() =>
                                                     void openFile(entry, true)
                                                 }
@@ -509,7 +517,7 @@ export function LocalDrawioFolderPanel({
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-8 px-2 text-xs"
+                                                className="h-7 px-2 text-[11px]"
                                                 onClick={() =>
                                                     void renameFile(entry)
                                                 }
@@ -520,7 +528,7 @@ export function LocalDrawioFolderPanel({
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                                                className="h-7 gap-1 px-2 text-[11px] text-destructive hover:text-destructive"
                                                 onClick={() =>
                                                     void deleteFile(entry)
                                                 }
