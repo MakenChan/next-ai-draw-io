@@ -6,6 +6,11 @@
  * WebAssembly issues with Next.js server-side rendering.
  */
 
+import {
+    DEFAULT_DIAGRAM_FONT_FAMILY,
+    DEFAULT_DIAGRAM_FONT_SIZE,
+} from "@/lib/diagram-font"
+
 // Default system prompt (~1900 tokens) - works with all models
 export const DEFAULT_SYSTEM_PROMPT = `
 You are an expert diagram creation assistant specializing in draw.io XML generation.
@@ -195,7 +200,7 @@ const STYLE_INSTRUCTIONS = `
 Common styles:
 - Shapes: rounded=1 (rounded corners), fillColor=#hex, strokeColor=#hex
 - Edges: endArrow=classic/block/open/none, startArrow=none/classic, curved=1, edgeStyle=orthogonalEdgeStyle
-- Text: fontSize=14, fontStyle=1 (bold), align=center/left/right
+- Text: use fontFamily=${DEFAULT_DIAGRAM_FONT_FAMILY};fontSize=${DEFAULT_DIAGRAM_FONT_SIZE} for labels on shapes and edges by default; fontStyle=1 (bold), align=center/left/right when appropriate
 `
 
 // Minimal style instruction - skip styling and focus on layout (prepended to prompt for emphasis)
@@ -203,9 +208,10 @@ const MINIMAL_STYLE_INSTRUCTION = `
 ## ⚠️ MINIMAL STYLE MODE ACTIVE ⚠️
 
 ### No Styling - Plain Black/White Only
-- NO fillColor, NO strokeColor, NO rounded, NO fontSize, NO fontStyle
+- NO fillColor, NO strokeColor, NO rounded, NO fontStyle
 - NO color attributes (no hex colors like #ff69b4)
-- Style: "whiteSpace=wrap;html=1;" for shapes, "html=1;endArrow=classic;" for edges
+- Use fontFamily=${DEFAULT_DIAGRAM_FONT_FAMILY};fontSize=${DEFAULT_DIAGRAM_FONT_SIZE} for labels on shapes and edges
+- Style: "whiteSpace=wrap;html=1;fontFamily=${DEFAULT_DIAGRAM_FONT_FAMILY};fontSize=${DEFAULT_DIAGRAM_FONT_SIZE};" for shapes, "html=1;endArrow=classic;fontFamily=${DEFAULT_DIAGRAM_FONT_FAMILY};fontSize=${DEFAULT_DIAGRAM_FONT_SIZE};" for edges
 - IGNORE all color/style examples below
 
 ### Container/Group Shapes - MUST be Transparent

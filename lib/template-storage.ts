@@ -1,5 +1,6 @@
 import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 import { nanoid } from "nanoid"
+import { SKILL_PROMPT_DEFINITIONS, SKILL_PROMPT_PREFIX } from "@/lib/skill-prompt-templates"
 
 // Constants
 const DB_NAME = "next-ai-drawio-templates"
@@ -86,6 +87,41 @@ export function isIndexedDBAvailable(): boolean {
         return "indexedDB" in window && window.indexedDB !== null
     } catch {
         return false
+    }
+}
+
+export function isSkillPromptTemplate(id: string): boolean {
+    return id.startsWith(SKILL_PROMPT_PREFIX)
+}
+
+export async function ensureSkillPromptTemplates(): Promise<void> {
+    if (!isIndexedDBAvailable()) return
+
+    try {
+        const db = await getDB()
+        const now = Date.now()
+
+        for (const definition of SKILL_PROMPT_DEFINITIONS) {
+            const existing = await db.get(STORE_NAME, definition.id)
+            if (existing) continue
+
+            const template: Template = {
+                id: definition.id,
+                title: definition.title,
+                prompt: definition.prompt.trim(),
+                description: definition.description,
+                createdAt: now,
+                updatedAt: now,
+                clickCount: 0,
+                runCount: 0,
+                lastUsedAt: 0,
+                pinned: false,
+            }
+
+            await db.put(STORE_NAME, template)
+        }
+    } catch (error) {
+        console.error("Failed to initialize Skill prompt templates:", error)
     }
 }
 

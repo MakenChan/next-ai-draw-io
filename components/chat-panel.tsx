@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import {
+    FolderOpen,
     MessageSquarePlus,
     PanelRightClose,
     PanelRightOpen,
@@ -22,6 +23,8 @@ import { Toaster, toast } from "sonner"
 import { ButtonWithTooltip } from "@/components/button-with-tooltip"
 import { ChatInput } from "@/components/chat-input"
 import Image from "@/components/image-with-basepath"
+import { LocalDrawioFolderPanel } from "@/components/local-drawio-folder-panel"
+import { LocalDrawioFileSwitcher } from "@/components/local-drawio-file-switcher"
 import { ModelConfigDialog } from "@/components/model-config-dialog"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { useDiagram } from "@/contexts/diagram-context"
@@ -43,7 +46,6 @@ import { useQuotaManager } from "@/lib/use-quota-manager"
 import { cn, formatXML, isRealDiagram } from "@/lib/utils"
 import type { ValidationState } from "./chat/ValidationCard"
 import { ChatMessageDisplay } from "./chat-message-display"
-import { DevXmlSimulator } from "./dev-xml-simulator"
 
 // localStorage keys for persistence
 const STORAGE_SESSION_ID_KEY = "next-ai-draw-io-session-id"
@@ -78,7 +80,6 @@ interface ChatPanelProps {
 
 // Constants for tool states
 const TOOL_ERROR_STATE = "output-error" as const
-const DEBUG = process.env.NODE_ENV === "development"
 // Increased to 3 to support VLM validation retries (matches MAX_VALIDATION_RETRIES)
 const MAX_AUTO_RETRY_COUNT = 3
 
@@ -163,6 +164,7 @@ export default function ChatPanel({
     const [urlData, setUrlData] = useState<Map<string, UrlData>>(new Map())
 
     const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+    const [showLocalFiles, setShowLocalFiles] = useState(false)
     const [showModelConfigDialog, setShowModelConfigDialog] = useState(false)
 
     // Model configuration hook
@@ -1077,7 +1079,23 @@ export default function ChatPanel({
         continuationRetryCountRef.current = 0
         partialXmlRef.current = ""
 
-        const config = getSelectedAIConfig()
+        const storedConfig = getSelectedAIConfig()
+        const selectedModel = modelConfig.selectedModel
+        const config = selectedModel
+            ? {
+                  ...storedConfig,
+                  aiProvider: selectedModel.provider,
+                  aiBaseUrl: selectedModel.baseUrl || "",
+                  aiApiKey: selectedModel.apiKey || "",
+                  aiModel: selectedModel.modelId,
+                  awsAccessKeyId: selectedModel.awsAccessKeyId || "",
+                  awsSecretAccessKey: selectedModel.awsSecretAccessKey || "",
+                  awsRegion: selectedModel.awsRegion || "",
+                  awsSessionToken: selectedModel.awsSessionToken || "",
+                  vertexApiKey: selectedModel.vertexApiKey || "",
+                  selectedModelId: selectedModel.id,
+              }
+            : storedConfig
 
         sendMessage(
             { parts },
@@ -1142,12 +1160,18 @@ export default function ChatPanel({
             if (isPdfFile(file)) {
                 const extracted = pdfData.get(file)
                 if (extracted?.text) {
-                    userText += `\n\n[PDF: ${file.name}]\n${extracted.text}`
+                    userText += `
+
+[PDF: ${file.name}]
+${extracted.text}`
                 }
             } else if (isTextFile(file)) {
                 const extracted = pdfData.get(file)
                 if (extracted?.text) {
-                    userText += `\n\n[File: ${file.name}]\n${extracted.text}`
+                    userText += `
+
+[File: ${file.name}]
+${extracted.text}`
                 }
             } else if (imageParts) {
                 // Handle as image (only if imageParts array provided)
@@ -1168,7 +1192,12 @@ export default function ChatPanel({
         if (urlDataParam) {
             for (const [url, data] of urlDataParam) {
                 if (data.content) {
-                    userText += `\n\n[URL: ${url}]\nTitle: ${data.title}\n\n${data.content}`
+                    userText += `
+
+[URL: ${url}]
+Title: ${data.title}
+
+${data.content}`
                 }
             }
         }
@@ -1348,6 +1377,17 @@ export default function ChatPanel({
                     </button>
                     <div className="flex items-center gap-1 justify-end overflow-visible">
                         <ButtonWithTooltip
+                            tooltipContent={showLocalFiles ? "返回 AI 对话" : "本地 Draw.io 文件"}
+                            variant={showLocalFiles ? "secondary" : "ghost"}
+                            size="icon"
+                            onClick={() => setShowLocalFiles((value) => !value)}
+                            className="hover:bg-accent"
+                            data-testid="local-drawio-files-button"
+                        >
+                            <FolderOpen className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-muted-foreground`} />
+                        </ButtonWithTooltip>
+
+                        <ButtonWithTooltip
                             tooltipContent={dict.nav.newChat}
                             variant="ghost"
                             size="icon"
@@ -1392,8 +1432,17 @@ export default function ChatPanel({
                 </div>
             </header>
 
-            {/* Messages */}
+            {!showLocalFiles && <LocalDrawioFileSwitcher />}
+
+            {/* AI chat / local Draw.io files */}
             <main className="flex-1 w-full overflow-hidden">
+                {showLocalFiles ? (
+                    <div className="h-full p-2">
+                        <LocalDrawioFolderPanel
+                            onFileOpened={() => setShowLocalFiles(false)}
+                        />
+                    </div>
+                ) : (
                 <ChatMessageDisplay
                     messages={messages}
                     setInput={setInput}
@@ -1414,20 +1463,11 @@ export default function ChatPanel({
                     onSendTemplate={handleSendTemplate}
                     currentInput={input}
                 />
+                )}
             </main>
 
-            {/* Dev XML Streaming Simulator - only in development */}
-            {DEBUG && (
-                <DevXmlSimulator
-                    setMessages={setMessages}
-                    onDisplayChart={onDisplayChart}
-                    onShowQuotaToast={() =>
-                        quotaManager.showQuotaLimitToast(50, 50)
-                    }
-                />
-            )}
-
             {/* Input */}
+            {!showLocalFiles && (
             <footer
                 className={`${isMobile ? "p-2" : "p-4"} border-t border-border/50 bg-card/50`}
             >
@@ -1453,6 +1493,7 @@ export default function ChatPanel({
                     onFocused={() => setShouldFocusInput(false)}
                 />
             </footer>
+            )}
 
             <SettingsDialog
                 open={showSettingsDialog}

@@ -150,6 +150,7 @@ export function ModelConfigDialog({
         addModel,
         updateModel,
         deleteModel,
+        setSelectedModelId,
     } = modelConfig
 
     // Get selected provider
@@ -395,6 +396,13 @@ export function ModelConfigDialog({
         if (allValid) {
             setValidationStatus("success")
             updateProvider(selectedProviderId, { validated: true })
+            // Treat the provider the user just successfully configured as active.
+            // This avoids falling back to server AI_MODEL when no model has been
+            // selected yet. For providers with multiple models, use the first
+            // configured model; the chat model selector can still change it later.
+            if (selectedProvider.models.length > 0) {
+                setSelectedModelId(selectedProvider.models[0].id)
+            }
             // Reset to idle after showing success briefly (with cleanup)
             if (validationResetTimeoutRef.current) {
                 clearTimeout(validationResetTimeoutRef.current)
@@ -407,7 +415,7 @@ export function ModelConfigDialog({
             setValidationStatus("error")
             setValidationError(`${errorCount} model(s) failed validation`)
         }
-    }, [selectedProvider, selectedProviderId, updateProvider, updateModel])
+    }, [selectedProvider, selectedProviderId, setSelectedModelId, updateProvider, updateModel])
 
     // Get all available provider types
     const availableProviders = Object.keys(PROVIDER_INFO) as ProviderName[]

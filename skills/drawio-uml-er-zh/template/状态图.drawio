@@ -1,0 +1,29 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="593d3acd5d85" name="库存同步状态">
+    <mxGraphModel dx="1273" dy="980" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="fontFamily=宋体;ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;" value="" vertex="1"><mxGeometry height="28" width="28" x="1066" y="50" as="geometry" /></mxCell>
+        <mxCell id="3" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="未装配策略" vertex="1"><mxGeometry height="70" width="180" x="990" y="120" as="geometry" /></mxCell>
+        <mxCell id="4" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="已装配缓存库存" vertex="1"><mxGeometry height="70" width="200" x="980" y="250" as="geometry" /></mxCell>
+        <mxCell id="5" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="已扣减缓存库存" vertex="1"><mxGeometry height="70" width="200" x="980" y="380" as="geometry" /></mxCell>
+        <mxCell id="6" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="待同步数据库" vertex="1"><mxGeometry height="70" width="180" x="990" y="510" as="geometry" /></mxCell>
+        <mxCell id="7" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="同步成功" vertex="1"><mxGeometry height="70" width="160" x="720" y="670" as="geometry" /></mxCell>
+        <mxCell id="8" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="同步失败" vertex="1"><mxGeometry height="70" width="160" x="1260" y="670" as="geometry" /></mxCell>
+        <mxCell id="9" parent="1" style="fontFamily=宋体;rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=16;arcSize=0;" value="补录成功" vertex="1"><mxGeometry height="70" width="180" x="990" y="860" as="geometry" /></mxCell>
+        <mxCell id="10" parent="1" style="fontFamily=宋体;ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;strokeColor=#000000;strokeWidth=3;" value="" vertex="1"><mxGeometry height="34" width="34" x="1063" y="1010" as="geometry" /></mxCell>
+        <mxCell id="11" parent="1" style="fontFamily=宋体;ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1"><mxGeometry height="18" width="18" x="1071" y="1018" as="geometry" /></mxCell>
+        <mxCell id="12" edge="1" parent="1" source="2" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="3" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="13" edge="1" parent="1" source="3" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="4" value="装配策略"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="14" edge="1" parent="1" source="4" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="5" value="发起抽奖"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="15" edge="1" parent="1" source="5" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="6" value="写入延迟队列"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="16" edge="1" parent="1" source="6" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="7" value="同步成功"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="800" y="625" /></Array></mxGeometry></mxCell>
+        <mxCell id="17" edge="1" parent="1" source="6" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="8" value="同步失败"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1340" y="625" /></Array></mxGeometry></mxCell>
+        <mxCell id="18" edge="1" parent="1" source="8" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="6" value="再次重试"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1380" y="545" /></Array></mxGeometry></mxCell>
+        <mxCell id="19" edge="1" parent="1" source="7" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="9" value="补录日志"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="800" y="800" /><mxPoint x="1080" y="800" /></Array></mxGeometry></mxCell>
+        <mxCell id="20" edge="1" parent="1" source="9" style="fontFamily=宋体;edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;endArrow=block;endFill=1;" target="10" value=""><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

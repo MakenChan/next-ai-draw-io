@@ -10,8 +10,24 @@ import {
     ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { useDiagram } from "@/contexts/diagram-context"
+import {
+    DEFAULT_DIAGRAM_FONT_FAMILY,
+    DEFAULT_DIAGRAM_FONT_SIZE,
+} from "@/lib/diagram-font"
 import { type DrawioTheme, isDrawioTheme } from "@/lib/drawio-themes"
 import { i18n, type Locale } from "@/lib/i18n/config"
+
+const DRAWIO_CONFIGURATION = {
+    customFonts: [DEFAULT_DIAGRAM_FONT_FAMILY],
+    defaultVertexStyle: {
+        fontFamily: DEFAULT_DIAGRAM_FONT_FAMILY,
+        fontSize: String(DEFAULT_DIAGRAM_FONT_SIZE),
+    },
+    defaultEdgeStyle: {
+        fontFamily: DEFAULT_DIAGRAM_FONT_FAMILY,
+        fontSize: String(DEFAULT_DIAGRAM_FONT_SIZE),
+    },
+}
 
 export default function Home() {
     const {
@@ -184,6 +200,7 @@ export default function Home() {
                                         onExport={handleDiagramExport}
                                         onLoad={handleDrawioLoad}
                                         baseUrl={drawioBaseUrl}
+                                        configuration={DRAWIO_CONFIGURATION}
                                         urlParameters={{
                                             ui: drawioUi,
                                             spin: false,
